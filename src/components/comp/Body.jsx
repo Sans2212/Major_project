@@ -4,7 +4,7 @@ import Cards from "./Cards"; // Import the new component
 
 const Body = () => {
   return (
-    <Flex direction="row" align="center" justify="space-between" position="relative">
+    <Flex direction="row" align="center" justify="space-between" position="relative" minHeight="80vh">
       {/* Left 70% - Hero Section */}
       {/* <Box w="70%" p={10}>
         <Heading as="h2" size="2xl" mb={4} color="teal.600">

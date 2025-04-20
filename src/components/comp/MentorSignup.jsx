@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // import React from "react";
+=======
+>>>>>>> 4622fcfd0f640e1a8e2fdf303078100144d9af8a
 import { Button, Container, Heading, Stack, Text, Box } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,7 +9,7 @@ const MentorSignup = () => {
   const navigate = useNavigate();
 
   return (
-    <Box bgGradient="linear(to-r, blue.50, teal.100)" py={16}>
+    <Box bgGradient="linear(to-r, blue.50, teal.100)" py={16} minHeight= "80vh">
       <Container maxW="4xl" centerContent textAlign="center">
         <Heading
           fontSize={{ base: "3xl", md: "4xl", lg: "5xl" }}
