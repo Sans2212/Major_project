@@ -1,7 +1,7 @@
-<<<<<<< HEAD
+
 // import React from "react";
-=======
->>>>>>> 4622fcfd0f640e1a8e2fdf303078100144d9af8a
+
+
 import { Button, Container, Heading, Stack, Text, Box } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
