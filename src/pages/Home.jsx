@@ -1,4 +1,3 @@
-import Header from "../components/comp/Header";
 import Body from "../components/comp/Body";
 
 
