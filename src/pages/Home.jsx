@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import Header from "../components/comp/Header";
+// import { useState } from "react";
+// import Header from "../components/comp/Header";
 import Body from "../components/comp/Body";
-import Footer from "../components/comp/Footer";
+// import Footer from "../components/comp/Footer";
 
 const Home = () => {
 
