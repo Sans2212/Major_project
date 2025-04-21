@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Box, Image, Heading, Text, VStack, HStack, Badge, Icon } from "@chakra-ui/react";
+import { Image, Heading, Text, VStack, HStack, Badge, Icon } from "@chakra-ui/react";
 import { StarIcon } from "@chakra-ui/icons";
 
 // Dummy Mentor Data (Should match the structure in Cards.jsx)
