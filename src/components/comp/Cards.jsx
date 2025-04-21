@@ -1,4 +1,5 @@
 import {Badge, Box, Button, HStack, Image, Card, CardHeader, CardBody, CardFooter, Heading, Text, VStack, Icon } from "@chakra-ui/react";
+import PropTypes from "prop-types";
 import { StarIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -109,6 +110,18 @@ const MentorCard = ({ mentor }) => {
     </Card>
   );
 };
+
+MentorCard.propTypes = {
+  mentor: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    expertise: PropTypes.arrayOf(PropTypes.string).isRequired,
+    rating: PropTypes.number.isRequired,
+    image: PropTypes.string.isRequired,
+    profileLink: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
 
 export const Cards = () => {
   const scrollRef = useRef(null);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   Button,
   Input,
   Text,
-  Divider,
   VStack,
   HStack,
   Modal,
@@ -126,14 +125,14 @@ const Login = () => {
               colorScheme="teal"
               onClick={() => setRole("mentee")}
             >
-              I'm a mentee
+              I&apos;m a mentee
             </Button>
             <Button
               variant={role === "mentor" ? "solid" : "outline"}
               colorScheme="teal"
               onClick={() => setRole("mentor")}
             >
-              I'm a mentor
+              I&apos;m a mentor
             </Button>
           </HStack>
 

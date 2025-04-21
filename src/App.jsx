@@ -14,8 +14,11 @@ import { Routes, Route, useLocation } from "react-router-dom";
 function App() {
   const location = useLocation(); // Gives the current route
 
-  // Hide header only for login and sign up as mentee
-  const hideHeader = location.pathname === "/login" || location.pathname === "/signup/mentee";
+  // Hide header on login, signup as mentee, and mentee home page
+  const hideHeader =
+    location.pathname === "/login" ||
+    location.pathname === "/signup/mentee" ||
+    location.pathname === "/home/mentee";
 
   return (
     <>
