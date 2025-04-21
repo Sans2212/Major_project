@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -15,7 +15,6 @@ import {
 } from "@chakra-ui/react";
 import ReactSelect from "react-select";
 import countryList from "react-select-country-list";
-
 
 
 const steps = [
@@ -199,7 +198,7 @@ const MentorApplicationForm = () => {
                 />
               </Box>
               <Box>
-                <Text mb={1}>Location</Text>
+                <Text mb={1}>country</Text>
                 <ReactSelect
                   name="location"
                   options={countryOptions}

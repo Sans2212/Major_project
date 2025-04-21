@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   Button,
   Input,
   Text,
-  Divider,
   VStack,
   Link,
 } from "@chakra-ui/react";
