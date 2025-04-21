@@ -132,7 +132,7 @@ const Login = () => {
               colorScheme="teal"
               onClick={() => setRole("mentor")}
             >
-              I&apos;m a mentee
+              I&apos;m a mentor
             </Button>
           </HStack>
 
