@@ -1,5 +1,6 @@
+import axios from "axios";
 import React, { useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -8,30 +9,53 @@ import {
   Button,
   Input,
   Text,
-  Divider,
   VStack,
   Link,
 } from "@chakra-ui/react";
-import logo from "../../assets/main_logo.png"
-// import logo from "../assets/main_logo.png";
-// import GoogleLogo from "../assets/Google_logo.png";
+import logo from "../../assets/main_logo.png";
 
 const MenteeSignup = () => {
-  //const location = useLocation();
-//  const role = location.pathname.includes("mentor") ? "mentor" : "mentee";
-
+  const navigate = useNavigate(); // Use this to redirect after successful signup
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    // expertise: "",
-    // experience: "",
+    expertise: "", // Optional, can be used for mentors
+    experience: "", // Optional, can be used for mentors
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+  
+    const menteeData = {
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      role: "mentee", // ✅ Add this line
+    };
+  
+    try {
+      const response = await axios.post("http://localhost:3001/signup", menteeData);
+      alert("Signup successful! 🎉");
+      console.log(response.data);
+      navigate("/login");
+    } catch (error) {
+      console.error("Signup error:", error.response?.data || error.message);
+      alert(error.response?.data?.error || "Signup failed");
+    }
+  };
+  
 
   return (
     <Flex w="100%" h="100vh" flexDirection={{ base: "column", md: "row" }}>
@@ -44,9 +68,8 @@ const MenteeSignup = () => {
         p={6}
       >
         <Link as={RouterLink} to="/">
-         <Image src={logo} alt="Logo" boxSize="150px" cursor="pointer" />
+          <Image src={logo} alt="Logo" boxSize="150px" cursor="pointer" />
         </Link>
-
       </Flex>
 
       {/* Right Side: Signup Form */}
@@ -57,11 +80,8 @@ const MenteeSignup = () => {
         p={6}
       >
         <Box w="full" maxW="md">
-          <Heading mb={6}>
-            Sign up as Mentee
-            {/* Sign up as {role.charAt(0).toUpperCase() + role.slice(1)} */}
-          </Heading>
-          <form>
+          <Heading mb={6}>Sign up as Mentee</Heading>
+          <form onSubmit={handleSubmit}>
             <VStack spacing={4} mb={4}>
               <Box w="full">
                 <Text mb={1}>Full Name</Text>
@@ -111,59 +131,38 @@ const MenteeSignup = () => {
                   focusBorderColor="teal.500"
                 />
               </Box>
-              {/* Extra Fields for Mentors */}
-              {/* {role === "mentor" && (
-                <>
-                  <Box w="full">
-                    <Text mb={1}>Expertise</Text>
-                    <Input
-                      type="text"
-                      name="expertise"
-                      placeholder="Your Expertise (e.g., AI, Web Dev)"
-                      value={formData.expertise}
-                      onChange={handleChange}
-                      required
-                      focusBorderColor="teal.500"
-                    />
-                  </Box>
-                  <Box w="full">
-                    <Text mb={1}>Experience (in years)</Text>
-                    <Input
-                      type="number"
-                      name="experience"
-                      placeholder="Years of Experience"
-                      value={formData.experience}
-                      onChange={handleChange}
-                      required
-                      focusBorderColor="teal.500"
-                    />
-                  </Box>
-                </>
-              )} */}
+
+              {/* Optional Fields for Mentors (Uncomment if you have mentor logic) */}
+              {/* 
+              <Box w="full">
+                <Text mb={1}>Expertise</Text>
+                <Input
+                  type="text"
+                  name="expertise"
+                  placeholder="Your Expertise (e.g., AI, Web Dev)"
+                  value={formData.expertise}
+                  onChange={handleChange}
+                  focusBorderColor="teal.500"
+                />
+              </Box>
+              <Box w="full">
+                <Text mb={1}>Experience (in years)</Text>
+                <Input
+                  type="number"
+                  name="experience"
+                  placeholder="Years of Experience"
+                  value={formData.experience}
+                  onChange={handleChange}
+                  focusBorderColor="teal.500"
+                />
+              </Box> 
+              */}
             </VStack>
 
-            {/* Signup Button */}
             <Button type="submit" w="full" colorScheme="teal" mb={4}>
-                Sign up as Mentee
-              {/* Sign Up as {role.charAt(0).toUpperCase() + role.slice(1)} */}
+              Sign up as Mentee
             </Button>
 
-            {/* Or Divider */}
-            {/* <Flex align="center" mb={4}>
-              <Divider />
-              <Text mx={2} color="gray.500">
-                Or
-              </Text>
-              <Divider />
-            </Flex> */}
-
-            {/* Google Signup Button */}
-            {/* <Button w="full" variant="outline" mb={4}>
-              <Image src={GoogleLogo} alt="Google Icon" boxSize="20px" mr={2} />
-              Sign up with Google
-            </Button> */}
-
-            {/* Extra Link for Existing Account */}
             <Text textAlign="center">
               Already have an account?{" "}
               <Link
