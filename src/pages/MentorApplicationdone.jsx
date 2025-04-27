@@ -1,7 +1,8 @@
 import { Box, Heading, Text, Button, VStack } from "@chakra-ui/react";
-import Confetti from "react-confetti";
+import Confetti from "react-confetti";  // Import here
 import { useWindowSize } from "react-use";
 import { useNavigate } from "react-router-dom";
+
 
 const MentorApplicationdone = () => {
   const { width, height } = useWindowSize();
