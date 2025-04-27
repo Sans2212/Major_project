@@ -8,9 +8,8 @@ import MentorApplicationdone from './pages/MentorApplicationdone';
 import MenteeHome from './pages/MenteeHome';
 import Header from "./components/comp/Header";
 import Footer from "./components/comp/Footer";
-import BrowseMentors from './pages/BrowseMentors';
 import { Routes, Route, useLocation } from "react-router-dom";
-// import ForgotPassword from './pages/Forgotpassword';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   const location = useLocation(); // Gives the current route
@@ -32,12 +31,13 @@ function App() {
         <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
         <Route path="/mentor/done" element={<MentorApplicationdone />} />
         <Route path="/home/mentee" element={<MenteeHome />} />
-        <Route path="/find-mentors" element={<BrowseMentors />} />
-        {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+        { <Route path="/forgot-Password" element={<ForgotPassword />} /> }
+        
       </Routes>
       <Footer />
     </>
   );
+  
 }
 
 export default App;

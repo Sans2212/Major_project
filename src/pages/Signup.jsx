@@ -1,4 +1,3 @@
-// src/pages/signup/Signup.jsx
 import { useParams } from "react-router-dom";
 import MenteeSignup from "../components/comp/MenteeSignup";
 import MentorSignup from "../components/comp/MentorSignup";

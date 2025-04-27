@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -8,7 +8,6 @@ import {
   Button,
   Input,
   Text,
-  Divider,
   VStack,
   HStack,
   Modal,
@@ -28,12 +27,12 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState(1);
+  const [otpMessage, setOtpMessage] = useState("");  // Message for OTP status
+  const [isLoading, setIsLoading] = useState(false); // Loading state for button
   const navigate = useNavigate();
 
-  // 👇 Login handler
   const handleLogin = (e) => {
     e.preventDefault();
-    // Simulate login
     if (role === "mentee") {
       navigate("/home/mentee");
     } else {
@@ -42,57 +41,64 @@ const Login = () => {
   };
 
   const sendOtp = async () => {
+    setIsLoading(true); // Set loading to true while sending OTP
+    setOtpMessage(""); // Clear previous messages
+
     try {
-      const response = await fetch("http://localhost:5000/send-otp", {
+      const response = await fetch("http://localhost:3001/api/mentees/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email }),
       });
-      const data = await response.json();
+
+      setIsLoading(false); // Reset loading state
+
       if (response.ok) {
-        alert("OTP sent to your email!");
-        setStep(2);
+        setOtpMessage("OTP sent successfully to your email!");
+        setStep(2); // Move to the next step after OTP is sent
       } else {
-        alert("Failed to send OTP: " + data.error);
+        const errorData = await response.json();
+        setOtpMessage(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      alert("Error sending OTP. Try again.");
+      setIsLoading(false);
+      setOtpMessage("Failed to send OTP. Please try again later.");
+      console.error("Error sending OTP:", error.message || error);
     }
   };
 
-  const verifyOtp = async () => {
+  const resetPassword = async () => {
+    setIsLoading(true); // Set loading to true while resetting password
     try {
-      const response = await fetch("http://localhost:5000/verify-otp", {
+      const response = await fetch("http://localhost:5000/api/mentees/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({ email, otp, newPassword }),
       });
       const data = await response.json();
+
+      setIsLoading(false); // Reset loading state
       if (response.ok) {
-        alert("OTP verified successfully!");
-        setStep(3);
+        alert("Password changed successfully");
+        setShowForgotPassword(false);
+        setStep(1); // Reset to step 1
+        setEmail("");
+        setOtp("");
+        setNewPassword("");
       } else {
-        alert("Invalid OTP. Please try again.");
+        alert("Failed to reset password: " + data.error);
       }
     } catch (error) {
-      console.error("Error verifying OTP:", error);
-      alert("Error verifying OTP. Try again.");
+      setIsLoading(false);
+      console.error("Error resetting password:", error);
+      alert("Error resetting password. Try again.");
     }
-  };
-
-  const resetPassword = () => {
-    alert("Password changed successfully");
-    setShowForgotPassword(false);
-    setStep(1);
-    setEmail("");
-    setOtp("");
-    setNewPassword("");
   };
 
   return (
     <Flex w="100%" h="100vh" flexDirection={{ base: "column", md: "row" }}>
-      {/* Left Side with Logo */}
       <Flex
         w={{ base: "100%", md: "40%" }}
         bgGradient="linear(to-b, teal.600, green.600)"
@@ -109,7 +115,6 @@ const Login = () => {
         />
       </Flex>
 
-      {/* Right Side: Form Section */}
       <Flex
         w={{ base: "100%", md: "60%" }}
         align="center"
@@ -119,21 +124,20 @@ const Login = () => {
         <Box w="full" maxW="md">
           <Heading mb={6}>Log in</Heading>
 
-          {/* Toggle Buttons */}
           <HStack spacing={4} mb={6}>
             <Button
               variant={role === "mentee" ? "solid" : "outline"}
               colorScheme="teal"
               onClick={() => setRole("mentee")}
             >
-              I'm a mentee
+              I&apos;m a mentee
             </Button>
             <Button
               variant={role === "mentor" ? "solid" : "outline"}
               colorScheme="teal"
               onClick={() => setRole("mentor")}
             >
-              I'm a mentor
+              I&apos;m a mentor
             </Button>
           </HStack>
 
@@ -146,6 +150,8 @@ const Login = () => {
                   placeholder="Enter your email or username"
                   required
                   focusBorderColor="teal.500"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Box>
               <Box w="full">
@@ -159,7 +165,6 @@ const Login = () => {
               </Box>
             </VStack>
 
-            {/* 👇 Login Button (calls handleLogin) */}
             <Button onClick={handleLogin} w="full" colorScheme="teal" mb={4}>
               Log in as {role === "mentee" ? "Mentee" : "Mentor"}
             </Button>
@@ -208,10 +213,7 @@ const Login = () => {
       </Flex>
 
       {/* Forgot Password Modal */}
-      <Modal
-        isOpen={showForgotPassword}
-        onClose={() => setShowForgotPassword(false)}
-      >
+      <Modal isOpen={showForgotPassword} onClose={() => setShowForgotPassword(false)}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Reset Password</ModalHeader>
@@ -226,37 +228,39 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <Button colorScheme="teal" onClick={sendOtp}>
+                <Button
+                  colorScheme="teal"
+                  onClick={sendOtp}
+                  isLoading={isLoading}
+                  loadingText="Sending OTP"
+                >
                   Send OTP
                 </Button>
+                {otpMessage && <Text mt={4} color="red.500">{otpMessage}</Text>} {/* OTP message */}
               </VStack>
             )}
 
             {step === 2 && (
               <VStack spacing={4}>
-                <Text>Enter OTP sent to your email</Text>
+                <Text>Enter OTP and new password</Text>
                 <Input
                   type="text"
                   placeholder="Enter OTP"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                 />
-                <Button colorScheme="teal" onClick={verifyOtp}>
-                  Verify OTP
-                </Button>
-              </VStack>
-            )}
-
-            {step === 3 && (
-              <VStack spacing={4}>
-                <Text>Enter new password</Text>
                 <Input
                   type="password"
                   placeholder="New Password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
-                <Button colorScheme="teal" onClick={resetPassword}>
+                <Button
+                  colorScheme="teal"
+                  onClick={resetPassword}
+                  isLoading={isLoading}
+                  loadingText="Resetting"
+                >
                   Reset Password
                 </Button>
               </VStack>

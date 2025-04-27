@@ -1,18 +1,5 @@
 import { useParams } from "react-router-dom";
-import {
-  Box,
-  Image,
-  Heading,
-  Text,
-  VStack,
-  HStack,
-  Badge,
-  Icon,
-  Stack,
-  Button,
-  Divider,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Image, Heading, Text, VStack, HStack, Badge, Icon } from "@chakra-ui/react";
 import { StarIcon } from "@chakra-ui/icons";
 
 // Dummy mentor data for display (replace with API data later)
@@ -61,7 +48,12 @@ const dummyMentor = {
 };
 
 const MentorProfile = () => {
-  const { mentorId } = useParams(); // Not used in dummy version
+  const { mentorId } = useParams(); // Get mentor ID from URL
+  const mentor = mentors.find((m) => m.profileLink === `/mentors/${mentorId}`);
+
+  if (!mentor) {
+    return <Text fontSize="xl" color="red.500">Mentor not found</Text>;
+  }
 
   return (
     <Box maxW="6xl" mx="auto" p={6}>

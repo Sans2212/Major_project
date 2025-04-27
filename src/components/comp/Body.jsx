@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Flex, Heading, Text, Stack, Image, Button } from "@chakra-ui/react";
 import Cards from "./Cards"; // Import the new component
 
