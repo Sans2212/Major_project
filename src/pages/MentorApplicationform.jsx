@@ -134,7 +134,7 @@ const MentorApplicationForm = () => {
                   }}
                 />
                 {formData.profilePhoto && formData.profilePhotoURL && (
-                  <Text mt={2}>
+                  <Text>
                     Uploaded:{" "}
                     <a
                       href={formData.profilePhotoURL}
