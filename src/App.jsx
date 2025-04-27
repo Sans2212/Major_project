@@ -9,13 +9,16 @@ import MenteeHome from './pages/MenteeHome';
 import Header from "./components/comp/Header";
 import Footer from "./components/comp/Footer";
 import { Routes, Route, useLocation } from "react-router-dom";
-// import ForgotPassword from './pages/Forgotpassword';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   const location = useLocation(); // Gives the current route
 
-  // Hide header only for login and sign up as mentee
-  const hideHeader = location.pathname === "/login" || location.pathname === "/signup/mentee";
+  // Hide header on login, signup as mentee, and mentee home page
+  const hideHeader =
+    location.pathname === "/login" ||
+    location.pathname === "/signup/mentee" ||
+    location.pathname === "/home/mentee";
 
   return (
     <>
@@ -28,7 +31,8 @@ function App() {
         <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
         <Route path="/mentor/done" element={<MentorApplicationdone />} />
         <Route path="/home/mentee" element={<MenteeHome />} />
-        {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+        { <Route path="/forgot-Password" element={<ForgotPassword />} /> }
+        
       </Routes>
       <Footer />
     </>

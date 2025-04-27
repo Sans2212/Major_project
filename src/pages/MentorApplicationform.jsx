@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import ReactSelect from "react-select";
 import countryList from "react-select-country-list";
+
 
 const steps = [
   { title: "About You", description: "Enter your personal details" },
@@ -85,14 +87,11 @@ const MentorApplicationForm = () => {
     Object.entries(formData).forEach(([k, v]) => {
       if (v !== null) toSend.append(k, v);
     });
-
+  
     try {
-      await axios.post(
-        "http://localhost:3001/api/mentors/apply",
-        toSend
-        // NO manual Content-Type header here!
-      );
-
+      // Post form data to the backend
+      await axios.post("http://localhost:3001/api/mentors/apply", toSend);
+  
       alert("Application submitted successfully!");
       navigate("/mentor/done");
     } catch (err) {
@@ -100,7 +99,7 @@ const MentorApplicationForm = () => {
       alert(err.response?.data?.error || "Failed to submit. Please try again.");
     }
   };
-
+  
   return (
     <Box bg="#f7f9fc" minH="100vh" py={10} px={isMobile ? 4 : 16}>
       <Heading mb={4}>Apply to Become a Mentor</Heading>
@@ -154,6 +153,7 @@ const MentorApplicationForm = () => {
 
           {activeStep === 1 && (
             <>
+
               <Input
                 name="jobTitle"
                 placeholder="Job Title"
@@ -176,6 +176,43 @@ const MentorApplicationForm = () => {
                   setFormData((p) => ({ ...p, location: opt.value }))
                 }
               />
+
+              <Box>
+                <Text mb={1}>Job Title</Text>
+                <Input
+                  name="jobTitle"
+                  placeholder="e.g., Software Engineer"
+                  value={formData.jobTitle}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Company</Text>
+                <Input
+                  name="company"
+                  placeholder="Where do you work?"
+                  value={formData.company}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>country</Text>
+                <ReactSelect
+                  name="location"
+                  options={countryOptions}
+                  placeholder="Select your country"
+                  value={countryOptions.find(
+                    (option) => option.value === formData.location
+                  )}
+                  onChange={(selectedOption) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      location: selectedOption.value,
+                    }))
+                  }
+                />
+              </Box>
+
             </>
           )}
 

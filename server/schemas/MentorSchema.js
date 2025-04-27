@@ -7,7 +7,7 @@ const mentorSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   jobTitle: String,
   company: String,
-  location: String,
+  country: String,
   category: String,
   skills: String,
   bio: String,
