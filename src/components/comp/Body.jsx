@@ -106,24 +106,8 @@ const Body = () => {
           <Text mb={6} textAlign="center">
             Choose from a diverse set of industry professionals ready to guide you on your career journey.
           </Text>
-        </Flex>
 
-        {/* Right Section (Cards) */}
-<Flex
-  flex="1"
-  justify="center"
-  align="center"
-  direction="column"
-  maxWidth={{ base: "100%", md: "50%" }}
-  height="100%"
-  overflowY="auto" // only vertical scroll if needed
->
-  <Cards  style={{ width: "100%" }} /> 
-</Flex>
-      </Flex>
-
-      {/* Tags Section */}
-      <Flex
+          <Flex
         direction="column"
         align="center"
         justify="center"
@@ -141,7 +125,26 @@ const Body = () => {
           ))}
 </Flex>
 
+        </Flex>
+
+        
+
       </Flex>
+
+        {/* Right Section (Cards) */}
+<Flex
+  flex="1"
+  justify="center"
+  align="center"
+  direction="column"
+  maxWidth={{ base: "100%", md: "50%" }}
+  height="100%"
+  overflowY="auto" // only vertical scroll if needed
+>
+  <Cards  style={{ width: "100%" }} /> 
+</Flex>
+      </Flex>
+     
     </Flex>
   );
 };
