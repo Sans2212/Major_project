@@ -154,11 +154,10 @@ export const Cards = () => {
     <Box 
     display="flex"
     flexDirection="column"
-    justifyContent="flex-start"
-    position="fixed"  
+    justifyContent="flex-start" 
     right="0" 
     top="100px"  /* Adjust top so it does not enter header */
-    width="25%" 
+    width="100%" 
     maxHeight="70vh" /* Prevents it from covering the entire screen */
     overflowY="auto" /* Enables scrolling */
     scrollBehavior="smooth"

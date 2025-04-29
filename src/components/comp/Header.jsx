@@ -39,6 +39,8 @@ const Header = () => {
   
     return (
       <>
+      <Box>
+        
         {/* Top Navigation Bar */}
         <Box bg="white" boxShadow="md" px={4} py={2}>
           <Flex align="center" justify="space-between">
@@ -148,6 +150,7 @@ const Header = () => {
             ))}
           </Flex>
         </Box>
+      </Box>
     </>
     );
 };

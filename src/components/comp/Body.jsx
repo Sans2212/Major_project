@@ -71,11 +71,11 @@ const Body = () => {
       justify="space-between"
     >
       {/* Main Content Section */}
-      <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap={10} flex="1">
+      <Flex justify="center" gap={10} flex="3">
         {/* Left Section (Content) */}
         <Flex
           direction="column"
-          flex="1"
+          flex="2"
           gap={6}
           align="center"
           justify="center"
@@ -106,7 +106,30 @@ const Body = () => {
           <Text mb={6} textAlign="center">
             Choose from a diverse set of industry professionals ready to guide you on your career journey.
           </Text>
+
+          <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        mt={10}
+        maxWidth={{ base: "100%", md: "100%" }}
+      >
+        <Text fontSize="lg" mb={4} textAlign="center">
+          Explore Mentors by Expertise
+        </Text>
+        <Flex wrap="wrap" justify="center" gap={4}>
+          {tags.map((tag, index) => (
+            <Tag key={index} colorScheme="teal" variant="solid" size="lg">
+              {tag}
+            </Tag>
+          ))}
+</Flex>
+
         </Flex>
+
+        
+
+      </Flex>
 
         {/* Right Section (Cards) */}
 <Flex
@@ -118,10 +141,10 @@ const Body = () => {
   height="100%"
   overflowY="auto" // only vertical scroll if needed
 >
-  <Cards />
+  <Cards  style={{ width: "100%" }} /> 
 </Flex>
-
       </Flex>
+     
     </Flex>
   );
 };
