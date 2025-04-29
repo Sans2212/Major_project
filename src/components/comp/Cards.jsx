@@ -1,185 +1,163 @@
-import {Badge, Box, Button, HStack, Image, Card, CardHeader, CardBody, CardFooter, Heading, Text, VStack, Icon } from "@chakra-ui/react";
-import PropTypes from "prop-types";
-import { StarIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { Box, Flex, Text, Avatar, Badge, Icon } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
+import { FaStar } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const mentors = [
-  { 
-    name: "Sanskruti Lohade", 
-    title: "Data Scientist", 
-    expertise: ["Data Science", "Python"], 
-    rating: 5.0, 
-    image: "https://static.vecteezy.com/system/resources/previews/012/177/622/original/man-avatar-isolated-png.png",
-    profileLink: "/mentors/sanskruti"
+  {
+    id: 1,
+    name: "Sarah Johnson",
+    role: "Senior Product Manager at Google",
+    rating: 4.9,
+    reviews: 127,
+    expertise: ["Product Strategy", "User Research", "Agile"],
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330"
   },
-  { 
-    name: "Yash Chaware", 
-    title: "React Developer", 
-    expertise: ["React", "Python"], 
-    rating: 4.8, 
-    image: "https://passport-photo.in/_next/static/media/IndianMan.99521520.png",
-    profileLink: "/mentors/yash"
+  {
+    id: 2,
+    name: "Michael Chen",
+    role: "Engineering Lead at Microsoft",
+    rating: 4.8,
+    reviews: 94,
+    expertise: ["System Design", "Leadership", "Cloud Architecture"],
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"
   },
-  { 
-    name: "Yash Chaware", 
-    title: "React Developer", 
-    expertise: ["React", "Python"], 
-    rating: 4.8, 
-    image: "https://passport-photo.in/_next/static/media/IndianMan.99521520.png",
-    profileLink: "/mentors/yash"
+  {
+    id: 3,
+    name: "Emily Rodriguez",
+    role: "UX Design Director at Apple",
+    rating: 5.0,
+    reviews: 156,
+    expertise: ["UI/UX", "Design Systems", "User Testing"],
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80"
   },
-
-  { 
-    name: "Yash Chaware", 
-    title: "React Developer", 
-    expertise: ["React", "Python"], 
-    rating: 4.8, 
-    image: "https://passport-photo.in/_next/static/media/IndianMan.99521520.png",
-    profileLink: "/mentors/yash"
-  },
-  { 
-    name: "Yash Chaware", 
-    title: "React Developer", 
-    expertise: ["React", "Python"], 
-    rating: 4.8, 
-    image: "https://passport-photo.in/_next/static/media/IndianMan.99521520.png",
-    profileLink: "/mentors/yash"
-  },
-  { 
-    name: "Yash Chaware", 
-    title: "React Developer", 
-    expertise: ["React", "Python"], 
-    rating: 4.8, 
-    image: "https://passport-photo.in/_next/static/media/IndianMan.99521520.png",
-    profileLink: "/mentors/yash"
-  },
-
+  {
+    id: 4,
+    name: "David Kim",
+    role: "Data Science Manager at Amazon",
+    rating: 4.7,
+    reviews: 83,
+    expertise: ["Machine Learning", "Analytics", "Python"],
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"
+  }
 ];
 
-const MentorCard = ({ mentor }) => {
+const Cards = ({ style }) => {
+  const containerRef = useRef(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const scrollPositionRef = useRef(0);
   const navigate = useNavigate();
 
-  return (
-    
-    <Card
-      display="flex"
-      flexDirection="row"
-      alignItems="center"
-      p={4}
-      boxShadow="md"
-      borderRadius="lg"
-      w="100%"
-      cursor="pointer"
-      transition="all 0.3s ease-in-out"
-      _hover={{ transform: "scale(1.03)", boxShadow: "xl" }}
-      onClick={() => navigate(mentor.profileLink)}
-    >
-      <Image borderRadius="full" boxSize="60px" src={mentor.image} alt={mentor.name} />
-      
-      <Box ml={4} flex="1">
-        <CardHeader p={0} display="flex" alignItems="center">
-          <Heading size="sm">{mentor.name}</Heading>
-          <HStack ml={2}>
-            <Icon as={StarIcon} color="green.400" />
-            <Text fontSize="sm" color="green.500">{mentor.rating}</Text>
-          </HStack>
-        </CardHeader>
-
-        <CardBody p={0}>
-          <Text fontSize="sm" color="gray.500">{mentor.title}</Text>
-          <HStack mt={2}>
-            {mentor.expertise.map((skill, i) => (
-              <Badge key={i} colorScheme="gray" variant="subtle">{skill}</Badge>
-            ))}
-          </HStack>
-        </CardBody>
-
-        <CardFooter p={0} mt={2.5} h="30px">
-          <Button 
-            colorScheme="teal" 
-            size="sm" 
-            h="24px" 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              navigate(`/mentors/${mentor.profileLink.split("/").pop()}`); 
-            }}          >
-            View Profile
-          </Button>
-        </CardFooter>
-      </Box>
-    </Card>
-    
-  );
-};
-
-MentorCard.propTypes = {
-  mentor: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    expertise: PropTypes.arrayOf(PropTypes.string).isRequired,
-    rating: PropTypes.number.isRequired,
-    image: PropTypes.string.isRequired,
-    profileLink: PropTypes.string.isRequired,
-  }).isRequired,
-};
-
-
-export const Cards = () => {
-  const scrollRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
-
   useEffect(() => {
-    const scrollContainer = scrollRef.current;
-  if (!scrollContainer) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-  let scrollInterval;
-  const startScrolling = () => {
-    scrollInterval = setInterval(() => {
-      if (!isHovered) {
-        scrollContainer.scrollTop += 1;
-        // scrollContainer.scrollBy({ top: 1, behavior: "smooth" }); // Ensures smooth scrolling
-        if (scrollContainer.scrollTop >= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
-          scrollContainer.scrollTop = 0; // Reset to top when reaching bottom
+    let animationFrameId;
+    const scrollSpeed = 0.5;
+
+    const scroll = () => {
+      if (!isPaused) {
+        scrollPositionRef.current += scrollSpeed;
+        
+        if (scrollPositionRef.current >= container.scrollHeight - container.clientHeight) {
+          scrollPositionRef.current = 0;
         }
+        
+        container.scrollTop = scrollPositionRef.current;
       }
-    }, 20);
+      animationFrameId = requestAnimationFrame(scroll);
     };
 
-    startScrolling();
-    return () => clearInterval(scrollInterval);
-  }, [isHovered]);
+    // Sync initial scroll position with container
+    scrollPositionRef.current = container.scrollTop;
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isPaused]);
+
+  const handleCardClick = (mentorId) => {
+    navigate(`/mentor/${mentorId}`);
+  };
+
+  const renderMentorCard = (mentor, isDuplicate = false) => (
+    <Box
+      key={isDuplicate ? `duplicate-${mentor.id}` : mentor.id}
+      p={6}
+      mb={4}
+      bg="white"
+      borderRadius="xl"
+      boxShadow="md"
+      border="1px"
+      borderColor="gray.200"
+      cursor="pointer"
+      position="relative"
+      transition="all 0.3s ease-in-out"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onClick={() => handleCardClick(mentor.id)}
+      _hover={{ 
+        transform: "scale(1.05)",
+        boxShadow: "xl",
+        zIndex: 2
+      }}
+    >
+      <Flex gap={4}>
+        <Avatar
+          size="xl"
+          name={mentor.name}
+          src={mentor.image}
+        />
+        <Box flex="1">
+          <Text fontWeight="bold" fontSize="lg">{mentor.name}</Text>
+          <Text color="gray.600" fontSize="md" mb={2}>{mentor.role}</Text>
+          
+          <Flex align="center" mb={3}>
+            <Icon as={FaStar} color="yellow.400" mr={1} />
+            <Text fontWeight="bold" mr={2}>{mentor.rating}</Text>
+            <Text color="gray.500">({mentor.reviews} reviews)</Text>
+          </Flex>
+
+          <Flex gap={2} flexWrap="wrap">
+            {mentor.expertise.map((skill, index) => (
+              <Badge
+                key={index}
+                colorScheme="teal"
+                variant="subtle"
+                px={2}
+                py={1}
+                borderRadius="full"
+              >
+                {skill}
+              </Badge>
+            ))}
+          </Flex>
+        </Box>
+      </Flex>
+    </Box>
+  );
 
   return (
-    <Box 
-    display="flex"
-    flexDirection="column"
-    justifyContent="flex-start" 
-    right="0" 
-    top="100px"  /* Adjust top so it does not enter header */
-    width="100%" 
-    maxHeight="70vh" /* Prevents it from covering the entire screen */
-    overflowY="auto" /* Enables scrolling */
-    scrollBehavior="smooth"
-    p={5}
+    <Box
+      ref={containerRef}
+      height="100%"
+      style={style}
+      overflow="hidden"
+      position="relative"
     >
-      {/* Scrolling Cards on Right Side */}
-        <Box 
-          maxHeight="100%" 
-          overflow="auto"
-          ref={scrollRef} 
-          onMouseEnter={() => setIsHovered(true)} 
-          onMouseLeave={() => setIsHovered(false)}
-          style={{ overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none"}}
-        >
-          <VStack spacing={4} align="center">
-            {mentors.map((mentor, index) => (
-              <MentorCard key={index} mentor={mentor} />
-            ))}
-          </VStack>
-        </Box>
-      </Box>
+      {mentors.map((mentor) => renderMentorCard(mentor))}
+      {/* Duplicate cards for continuous scroll */}
+      {mentors.map((mentor) => renderMentorCard(mentor, true))}
+    </Box>
   );
+};
+
+Cards.propTypes = {
+  style: PropTypes.object
 };
 
 export default Cards;

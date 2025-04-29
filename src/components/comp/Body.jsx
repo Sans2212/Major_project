@@ -1,151 +1,125 @@
-import { useState, useEffect } from "react";
 import {
   Flex,
-  Heading,
-  Text,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Button,
   Tag,
-  SimpleGrid,
+  Box,
+  Input,
+  Button,
+  useColorModeValue,
 } from "@chakra-ui/react";
-import Cards from "./Cards"; // Assuming this is your custom Cards component to display mentor profiles
+import { useNavigate } from "react-router-dom";
+import Cards from "./Cards";
+import Hero from "../home/Hero";
 
 const tags = [
   "Product Managers",
-  "Career Coaches",
+  "Career Coaches", 
   "Software Engineers",
   "Leadership Mentors",
   "UX Designers",
   "Data Scientists",
-  "Startup Founders",
-];
-
-const rotatingWords = [
-  "Marketing",
-  "Design",
-  "Engineering",
-  "Startups",
-  "Leadership",
-  "Data Science",
-  "Product Management",
-  "Career Growth",
+  "Startup Founders"
 ];
 
 const Body = () => {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [displayText, setDisplayText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+  const tagBgColor = useColorModeValue('gray.100', 'gray.700');
+  const tagHoverBgColor = useColorModeValue('gray.200', 'gray.600');
 
-  useEffect(() => {
-    const currentWord = rotatingWords[currentWordIndex];
-    const typingSpeed = isDeleting ? 50 : 150; // faster when deleting
+  const handleTagClick = (tag) => {
+    navigate(`/browse/${encodeURIComponent(tag.toLowerCase().replace(/\s+/g, "-"))}`);
+  };
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        // Typing effect
-        setDisplayText(currentWord.substring(0, displayText.length + 1));
-        if (displayText.length + 1 === currentWord.length) {
-          setTimeout(() => setIsDeleting(true), 1000); // wait before deleting
-        }
-      } else {
-        // Deleting effect
-        setDisplayText(currentWord.substring(0, displayText.length - 1));
-        if (displayText.length === 0) {
-          setIsDeleting(false);
-          setCurrentWordIndex((prevIndex) => (prevIndex + 1) % rotatingWords.length);
-        }
-      }
-    }, typingSpeed);
-
-    return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentWordIndex]);
+  const handleSearch = () => {
+    const searchInput = document.querySelector('input[type="search"]');
+    if (searchInput && searchInput.value.trim()) {
+      navigate(`/browse/${encodeURIComponent(searchInput.value.trim().toLowerCase().replace(/\s+/g, "-"))}`);
+    }
+  };
 
   return (
-    <Flex
-      direction="column"
-      minHeight="100vh"
-      bg="white"
-      py={10}
-      justify="space-between"
-    >
-      {/* Main Content Section */}
-      <Flex justify="center" gap={10} flex="3">
-        {/* Left Section (Content) */}
-        <Flex
-          direction="column"
-          flex="2"
-          gap={6}
-          align="center"
-          justify="center"
-          maxWidth={{ base: "100%", md: "100%" }}
+    <Box maxW="1400px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
+      <Flex gap={{ base: 8, lg: 12 }}>
+        {/* Left Section */}
+        <Box flex="1.4" maxW="800px">
+          {/* Main Title Section */}
+          <Box mb={12}>
+            <Hero />
+          </Box>
+
+          {/* Search Section */}
+          <Flex mb={10} gap={3}>
+            <Input
+              type="search"
+              placeholder="Search by company, skills or role"
+              size="lg"
+              bg="white"
+              borderColor="gray.300"
+              borderRadius="md"
+              _placeholder={{ color: "gray.500" }}
+              _hover={{ borderColor: "gray.400" }}
+              _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
+            />
+            <Button
+              colorScheme="teal"
+              size="lg"
+              px={6}
+              onClick={handleSearch}
+            >
+              Find mentors
+            </Button>
+          </Flex>
+
+          {/* Categories */}
+          <Flex wrap="wrap" gap={3} mb={16}>
+            {tags.map((tag, index) => (
+              <Tag
+                key={index}
+                size="lg"
+                bg={tagBgColor}
+                color="gray.700"
+                cursor="pointer"
+                py={2}
+                px={4}
+                borderRadius="full"
+                _hover={{
+                  bg: tagHoverBgColor,
+                }}
+                onClick={() => handleTagClick(tag)}
+              >
+                {tag}
+              </Tag>
+            ))}
+          </Flex>
+        </Box>
+
+        {/* Right Section - Mentor Cards */}
+        <Box
+          flex="1"
+          position="relative"
+          maxWidth={{ base: "100%", md: "50%" }}
+          height="calc(100vh - 100px)"
+          overflow="hidden"
+          sx={{
+            '&::-webkit-scrollbar': { display: 'none' },
+            'scrollbarWidth': 'none',
+            'msOverflowStyle': 'none',
+            'touchAction': 'none',
+            'userSelect': 'none'
+          }}
         >
-          {/* Intro Text */}
-          <Text fontSize="50" fontWeight="500" color="teal" textAlign="center">
-            Unlock your Potential with Expert Guidance.
-          </Text>
-
-          {/* Heading with typing effect */}
-          <Heading as="h1" size="3xl" mb={6} textAlign="center">
-            1-on-1{" "}
-            <Text as="span" color="teal.500">
-              {displayText}
-            </Text>{" "}
-            Mentorship
-          </Heading>
-
-          <Text fontSize="lg"  color="gray.500" textAlign="center">
-            Connect with top mentors to navigate your career growth.
-          </Text>
-
-          {/* Heading for Mentors */}
-          <Heading as="h2" size="lg" mb={6} textAlign="center">
-            Meet our Mentors
-          </Heading>
-          <Text mb={6} textAlign="center">
-            Choose from a diverse set of industry professionals ready to guide you on your career journey.
-          </Text>
-
-          <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        mt={10}
-        maxWidth={{ base: "100%", md: "100%" }}
-      >
-        <Text fontSize="lg" mb={4} textAlign="center">
-          Explore Mentors by Expertise
-        </Text>
-        <Flex wrap="wrap" justify="center" gap={4}>
-          {tags.map((tag, index) => (
-            <Tag key={index} colorScheme="teal" variant="solid" size="lg">
-              {tag}
-            </Tag>
-          ))}
-</Flex>
-
-        </Flex>
-
-        
-
+          <Box
+            position="absolute"
+            top={0}
+            left={0}
+            right={0}
+            bottom={0}
+            overflow="hidden"
+          >
+            <Cards style={{ width: "100%" }} />
+          </Box>
+        </Box>
       </Flex>
-
-        {/* Right Section (Cards) */}
-<Flex
-  flex="1"
-  justify="center"
-  align="center"
-  direction="column"
-  maxWidth={{ base: "100%", md: "50%" }}
-  height="100%"
-  overflowY="auto" // only vertical scroll if needed
->
-  <Cards  style={{ width: "100%" }} /> 
-</Flex>
-      </Flex>
-     
-    </Flex>
+    </Box>
   );
 };
 
