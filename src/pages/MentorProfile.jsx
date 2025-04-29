@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Image, Heading, Text, VStack, HStack, Badge, Icon } from "@chakra-ui/react";
+import { Box, Image, Heading, Text, VStack, HStack, Badge, Icon, Divider, Stack, Button, useColorModeValue } from "@chakra-ui/react";
 import { StarIcon } from "@chakra-ui/icons";
 
 // Dummy mentor data for display (replace with API data later)
@@ -49,11 +49,10 @@ const dummyMentor = {
 
 const MentorProfile = () => {
   const { mentorId } = useParams(); // Get mentor ID from URL
-  const mentor = mentors.find((m) => m.profileLink === `/mentors/${mentorId}`);
 
-  if (!mentor) {
-    return <Text fontSize="xl" color="red.500">Mentor not found</Text>;
-  }
+  // For now, we'll use the dummy mentor data
+  // Later, you can fetch real data based on mentorId
+  const mentor = dummyMentor;
 
   return (
     <Box maxW="6xl" mx="auto" p={6}>
@@ -63,23 +62,23 @@ const MentorProfile = () => {
           <Image
             borderRadius="full"
             boxSize="120px"
-            src={dummyMentor.image}
-            alt={dummyMentor.name}
+            src={mentor.image}
+            alt={mentor.name}
           />
           <Box>
-            <Heading size="lg">{dummyMentor.name}</Heading>
+            <Heading size="lg">{mentor.name}</Heading>
             <Text fontSize="md" color="gray.600">
-              {dummyMentor.title}
+              {mentor.title}
             </Text>
             <Text fontSize="sm" color="gray.500">
-              {dummyMentor.location}
+              {mentor.location}
             </Text>
             <HStack mt={1}>
               <Icon as={StarIcon} color="green.400" />
-              <Text color="green.600">{dummyMentor.rating}</Text>
+              <Text color="green.600">{mentor.rating}</Text>
             </HStack>
             <HStack mt={2} spacing={2}>
-              {dummyMentor.expertise.map((skill, index) => (
+              {mentor.expertise.map((skill, index) => (
                 <Badge key={index} colorScheme="teal">
                   {skill}
                 </Badge>
@@ -96,7 +95,7 @@ const MentorProfile = () => {
             About Me
           </Heading>
           <Text fontSize="md" color="gray.700">
-            {dummyMentor.about}
+            {mentor.about}
           </Text>
         </Box>
 
@@ -108,7 +107,7 @@ const MentorProfile = () => {
             Mentorship Plans
           </Heading>
           <Stack spacing={4}>
-            {dummyMentor.plans.map((plan, index) => (
+            {mentor.plans.map((plan, index) => (
               <Box
                 key={index}
                 p={4}
@@ -151,7 +150,7 @@ const MentorProfile = () => {
             Testimonials
           </Heading>
           <Stack spacing={4}>
-            {dummyMentor.testimonials.map((testimonial, index) => (
+            {mentor.testimonials.map((testimonial, index) => (
               <Box
                 key={index}
                 p={4}
@@ -161,7 +160,7 @@ const MentorProfile = () => {
                 bg={useColorModeValue("white", "gray.800")}
               >
                 <Text fontSize="sm" color="gray.700" fontStyle="italic">
-                  “{testimonial.feedback}”
+                  "{testimonial.feedback}"
                 </Text>
                 <Text fontWeight="bold" mt={2}>
                   — {testimonial.name}
