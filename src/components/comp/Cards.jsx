@@ -61,6 +61,7 @@ const MentorCard = ({ mentor }) => {
   const navigate = useNavigate();
 
   return (
+    
     <Card
       display="flex"
       flexDirection="row"
@@ -108,6 +109,7 @@ const MentorCard = ({ mentor }) => {
         </CardFooter>
       </Box>
     </Card>
+    
   );
 };
 

@@ -1,36 +1,127 @@
-import { Box, Flex, Heading, Text, Stack, Image, Button } from "@chakra-ui/react";
-import Cards from "./Cards"; // Import the new component
+import { useState, useEffect } from "react";
+import {
+  Flex,
+  Heading,
+  Text,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Button,
+  Tag,
+  SimpleGrid,
+} from "@chakra-ui/react";
+import Cards from "./Cards"; // Assuming this is your custom Cards component to display mentor profiles
+
+const tags = [
+  "Product Managers",
+  "Career Coaches",
+  "Software Engineers",
+  "Leadership Mentors",
+  "UX Designers",
+  "Data Scientists",
+  "Startup Founders",
+];
+
+const rotatingWords = [
+  "Marketing",
+  "Design",
+  "Engineering",
+  "Startups",
+  "Leadership",
+  "Data Science",
+  "Product Management",
+  "Career Growth",
+];
 
 const Body = () => {
-  return (
-    <Flex direction="row" align="center" justify="space-between" position="relative" minHeight="80vh">
-      {/* Left 70% - Hero Section */}
-      {/* <Box w="70%" p={10}>
-        <Heading as="h2" size="2xl" mb={4} color="teal.600">
-          Unlock Your Potential with Expert Guidance
-        </Heading>
-        <Text fontSize="xl" mb={6} color="gray.600">
-          Connect with top mentors to navigate your career and personal growth.
-        </Text>
-        <Stack direction={{ base: "column", md: "row" }} spacing={4}>
-          <Button colorScheme="teal" variant="solid" size="lg">
-            Find a Mentor
-          </Button>
-          <Button colorScheme="green" variant="outline" size="lg">
-            Become a Mentor
-          </Button>
-        </Stack>
-        <Image
-          src="https://via.placeholder.com/500x400.png?text=Mentor+Connect"
-          alt="Mentor Connect Illustration"
-          borderRadius="md"
-          shadow="lg"
-          mt={6}
-        />
-      </Box> */}
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-      {/* Right 30% - Scrolling Mentors */}
-      <Cards />
+  useEffect(() => {
+    const currentWord = rotatingWords[currentWordIndex];
+    const typingSpeed = isDeleting ? 50 : 150; // faster when deleting
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing effect
+        setDisplayText(currentWord.substring(0, displayText.length + 1));
+        if (displayText.length + 1 === currentWord.length) {
+          setTimeout(() => setIsDeleting(true), 1000); // wait before deleting
+        }
+      } else {
+        // Deleting effect
+        setDisplayText(currentWord.substring(0, displayText.length - 1));
+        if (displayText.length === 0) {
+          setIsDeleting(false);
+          setCurrentWordIndex((prevIndex) => (prevIndex + 1) % rotatingWords.length);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentWordIndex]);
+
+  return (
+    <Flex
+      direction="column"
+      minHeight="100vh"
+      bg="white"
+      py={10}
+      justify="space-between"
+    >
+      {/* Main Content Section */}
+      <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap={10} flex="1">
+        {/* Left Section (Content) */}
+        <Flex
+          direction="column"
+          flex="1"
+          gap={6}
+          align="center"
+          justify="center"
+          maxWidth={{ base: "100%", md: "100%" }}
+        >
+          {/* Intro Text */}
+          <Text fontSize="50" fontWeight="500" color="teal" textAlign="center">
+            Unlock your Potential with Expert Guidance.
+          </Text>
+
+          {/* Heading with typing effect */}
+          <Heading as="h1" size="3xl" mb={6} textAlign="center">
+            1-on-1{" "}
+            <Text as="span" color="teal.500">
+              {displayText}
+            </Text>{" "}
+            Mentorship
+          </Heading>
+
+          <Text fontSize="lg"  color="gray.500" textAlign="center">
+            Connect with top mentors to navigate your career growth.
+          </Text>
+
+          {/* Heading for Mentors */}
+          <Heading as="h2" size="lg" mb={6} textAlign="center">
+            Meet our Mentors
+          </Heading>
+          <Text mb={6} textAlign="center">
+            Choose from a diverse set of industry professionals ready to guide you on your career journey.
+          </Text>
+        </Flex>
+
+        {/* Right Section (Cards) */}
+<Flex
+  flex="1"
+  justify="center"
+  align="center"
+  direction="column"
+  maxWidth={{ base: "100%", md: "50%" }}
+  height="100%"
+  overflowY="auto" // only vertical scroll if needed
+>
+  <Cards />
+</Flex>
+
+      </Flex>
     </Flex>
   );
 };
