@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+// schemas/UserSchema.js
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   fullName: String,
@@ -7,8 +8,8 @@ const userSchema = new mongoose.Schema({
   role: String,
   createdAt: { type: Date, default: Date.now },
   otp: String,
-otpExpiry: Date,
-
+  otpExpiry: Date,
 });
 
-module.exports = userSchema;
+// Default export
+export default userSchema;

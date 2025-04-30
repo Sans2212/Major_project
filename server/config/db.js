@@ -1,33 +1,37 @@
-const mongoose = require('mongoose');
-require('dotenv').config();
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-// Create connections for both databases
-const generalConnection = mongoose.createConnection(process.env.MONGO_URI, {
-  dbName: 'menteecredentials',
+// Load environment variables from .env file
+dotenv.config();
+
+// Creating separate connections for mentee and mentor databases
+const menteeConnection = mongoose.createConnection(process.env.MONGO_URI_MENTEE, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
 
 const mentorConnection = mongoose.createConnection(process.env.MONGO_URI_MENTOR, {
-  dbName: 'mentorCeradentials',
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
 
-
-// Logging successful connection for both databases
-generalConnection.once('open', () => {
-  console.log('✅ Mongoose connected to mentee DB');
+// Event listeners for error handling
+menteeConnection.on('connected', () => {
+  console.log('Mentee database connected');
 });
 
-mentorConnection.once('open', () => {
-  console.log('✅ Mongoose connected to mentor DB');
+mentorConnection.on('connected', () => {
+  console.log('Mentor database connected');
 });
 
-// Logging error for both databases
-generalConnection.on('error', (err) => {
-  console.error('❌ Mentee DB connection error:', err);
+// Error handling for connections
+menteeConnection.on('error', (err) => {
+  console.error('Error connecting to Mentee database:', err);
 });
 
 mentorConnection.on('error', (err) => {
-  console.error('❌ Mentor DB connection error:', err);
+  console.error('Error connecting to Mentor database:', err);
 });
 
-// Export the connection objects for use in other files
-module.exports = { generalConnection, mentorConnection };
+// Export the connections for use in other parts of your application
+export { menteeConnection, mentorConnection };

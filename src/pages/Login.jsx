@@ -26,17 +26,48 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [step, setStep] = useState(1);
-  const [otpMessage, setOtpMessage] = useState("");  // Message for OTP status
+  const [otpMessage, setOtpMessage] = useState(""); // Message for OTP status
   const [isLoading, setIsLoading] = useState(false); // Loading state for button
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (role === "mentee") {
-      navigate("/home/mentee");
-    } else {
-      navigate("/home/mentor");
+    console.log("Login attempt with:", { email, role, passwordLength: loginPassword.length });
+
+    try {
+      const response = await fetch("http://localhost:3001/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ 
+          email: email.trim(),
+          password: loginPassword,
+          role: role.trim()
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        const { token } = data;
+        localStorage.setItem('authToken', token);
+
+        if (role === "mentee") {
+          navigate("/home/mentee");
+        } else {
+          navigate("/home/mentor");
+        }
+      } else {
+        console.error("Login failed:", data.error);
+        alert(data.error || "Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      alert("Error logging in. Please try again.");
     }
   };
 
@@ -72,7 +103,7 @@ const Login = () => {
   const resetPassword = async () => {
     setIsLoading(true); // Set loading to true while resetting password
     try {
-      const response = await fetch("http://localhost:5000/api/mentees/reset-password", {
+      const response = await fetch("http://localhost:3001/api/mentees/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword }),
@@ -141,14 +172,17 @@ const Login = () => {
             </Button>
           </HStack>
 
-          <form>
+          <form onSubmit={handleLogin}>
             <VStack spacing={4} mb={4}>
               <Box w="full">
-                <Text mb={1}>Email or Username</Text>
+                <Text mb={1}>Email</Text>
                 <Input
-                  type="text"
-                  placeholder="Enter your email or username"
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="Enter your email"
                   required
+                  autoComplete="email"
                   focusBorderColor="teal.500"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -158,14 +192,19 @@ const Login = () => {
                 <Text mb={1}>Password</Text>
                 <Input
                   type="password"
+                  id="password"
+                  name="password"
                   placeholder="Password"
                   required
+                  autoComplete="current-password"
                   focusBorderColor="teal.500"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
                 />
               </Box>
             </VStack>
 
-            <Button onClick={handleLogin} w="full" colorScheme="teal" mb={4}>
+            <Button type="submit" w="full" colorScheme="teal" mb={4}>
               Log in as {role === "mentee" ? "Mentee" : "Mentor"}
             </Button>
 
