@@ -36,6 +36,10 @@ const ForgotPassword = () => {
         email,
       });
 
+      if(!response.ok){
+        toast.error("Something went Wrong!");
+      }
+
       toast({
         title: "OTP Sent!",
         description: response.data.message,

@@ -44,7 +44,8 @@ const MenteeSignup = () => {
     };
 
     try {
-      const response = await axios.post("http://localhost:3001/signup", menteeData);
+      // Correct API route
+      const response = await axios.post("http://localhost:3001/api/auth/signup", menteeData);
       alert("Signup successful! 🎉");
       console.log(response.data);
       navigate("/login");
@@ -143,18 +144,7 @@ const MenteeSignup = () => {
                 Log in
               </Link>
             </Text>
-
-            <Text mt={2} textAlign="center">
-              Forgot your password?{" "}
-              <Link
-                as={RouterLink}
-                to="/forgot-password"
-                color="red.400"
-                _hover={{ textDecoration: "underline" }}
-              >
-                Reset here
-              </Link>
-            </Text>
+            
           </form>
         </Box>
       </Flex>
