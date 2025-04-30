@@ -17,8 +17,12 @@ import {
   VStack,
   useDisclosure,
   useBreakpointValue,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import { SearchIcon, HamburgerIcon } from "@chakra-ui/icons";
+import { SearchIcon, HamburgerIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/main_logo.png";
 
@@ -30,29 +34,32 @@ const Header = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Handle search submission
-  const handleSearch = () => {
-    if (searchTerm.trim() !== "") {
-      navigate(`/browse/${encodeURIComponent(searchTerm.trim().toLowerCase().replace(/\s+/g, "-"))}`);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Convert search term to lowercase and replace spaces with hyphens
+      const formattedSearch = searchTerm.toLowerCase().replace(/\s+/g, "-");
+      navigate(`/browse/search?q=${encodeURIComponent(formattedSearch)}`);
     }
   };
 
   // Handle search on Enter key
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleSearch();
+      handleSearch(e);
     }
   };
 
   // Mentor categories for the secondary navigation
   const mentorCategories = [
-    { name: "Engineering Mentors", path: "/browse/engineering" },
-    { name: "Design Mentors", path: "/browse/design" },
-    { name: "Startup Mentors", path: "/browse/startup" },
-    { name: "Product Managers", path: "/browse/product-management" },
-    { name: "Marketing Coaches", path: "/browse/marketing" },
-    { name: "Leadership Mentors", path: "/browse/leadership" },
-    { name: "Career Coaches", path: "/browse/career" },
-    { name: "Top Mentors", path: "/browse/top" },
+    { name: "Engineering Mentors", path: "/browse/search?q=engineering" },
+    { name: "Design Mentors", path: "/browse/search?q=design" },
+    { name: "Startup Mentors", path: "/browse/search?q=startup" },
+    { name: "Product Management", path: "/browse/search?q=product" },
+    { name: "Marketing", path: "/browse/search?q=marketing" },
+    { name: "Leadership", path: "/browse/search?q=leadership" },
+    { name: "Career", path: "/browse/search?q=career" },
+    { name: "Data Science", path: "/browse/search?q=data" }
   ];
 
   const handleNavigation = (path) => {
@@ -94,7 +101,7 @@ const Header = () => {
             <Flex>
               <Input
                 h="40px"
-                placeholder="Search"
+                placeholder="Search mentors by name, role, or expertise..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -126,14 +133,27 @@ const Header = () => {
             display={{ base: "none", md: "flex" }}
             ml={{ md: 4, lg: 8 }}
           >
-            <Button
-              colorScheme="teal"
-              size="md"
-              onClick={() => handleNavigation("/browse")}
-              px={6}
-            >
-              Browse Mentors
-            </Button>
+            <Menu>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                colorScheme="teal"
+                size="md"
+                px={6}
+              >
+                Browse Mentors
+              </MenuButton>
+              <MenuList maxH="400px" overflowY="auto">
+                {mentorCategories.map((category) => (
+                  <MenuItem
+                    key={category.name}
+                    onClick={() => handleNavigation(category.path)}
+                  >
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
             <Button
               variant="ghost"
               size="md"
@@ -147,71 +167,13 @@ const Header = () => {
           {/* Mobile Menu Button */}
           <IconButton
             display={{ base: "flex", md: "none" }}
-            aria-label="Open menu"
             icon={<HamburgerIcon />}
-            onClick={onOpen}
             variant="ghost"
-            ml={2}
+            onClick={onOpen}
+            aria-label="Open menu"
           />
         </Flex>
       </Container>
-
-      {/* Mobile Search Bar */}
-      <Box display={{ base: "block", md: "none" }} px={4} pb={4}>
-        <Flex>
-          <Input
-            h="40px"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleKeyDown}
-            bg="gray.50"
-            border="1px"
-            borderColor="gray.200"
-            borderRadius="md"
-            _placeholder={{ color: "gray.500" }}
-          />
-          <Button
-            h="40px"
-            ml={2}
-            onClick={handleSearch}
-            colorScheme="teal"
-          >
-            <SearchIcon />
-          </Button>
-        </Flex>
-      </Box>
-
-      {/* Categories Navigation - Hidden on mobile */}
-      <Box borderTop="1px" borderColor="gray.100" display={{ base: "none", md: "block" }}>
-        <Container maxW="1200px" px={4}>
-          <Flex h="48px" align="center" overflowX="auto" css={{
-            '&::-webkit-scrollbar': {
-              display: 'none'
-            },
-            'scrollbarWidth': 'none'
-          }}>
-            {mentorCategories.map((category) => (
-              <Box
-                key={category.name}
-                as="button"
-                px={3}
-                py={2}
-                fontSize="14px"
-                fontWeight="500"
-                color="gray.700"
-                whiteSpace="nowrap"
-                _hover={{
-                  color: "teal.600",
-                }}
-                onClick={() => handleNavigation(category.path)}
-              >
-                {category.name}
-              </Box>
-            ))}
-          </Flex>
-        </Container>
-      </Box>
 
       {/* Mobile Menu Drawer */}
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
