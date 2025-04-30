@@ -1,9 +1,10 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 const otpStore = {};
@@ -85,7 +86,7 @@ router.post("/forgot-password/reset-password", async (req, res) => {
     return res.status(400).json({ error: "Invalid OTP" });
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const hashedPassword = await bcryptjs.hash(newPassword, 10);
   await MentorModel.updateOne({ email }, { password: hashedPassword });
 
   delete otpStore[email];
@@ -98,6 +99,13 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
   try {
     const MentorModel = req.app.locals.MentorModel;
 
+    console.log("=== New Mentor Signup ===");
+    console.log("Received mentor data:", {
+      ...req.body,
+      password: req.body.password ? "exists" : "missing",
+      confirmPassword: req.body.confirmPassword ? "exists" : "missing"
+    });
+
     const {
       firstName, lastName, email, jobTitle, company,
       location, category, skills, bio, linkedin,
@@ -106,21 +114,35 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
 
     // Validate password fields
     if (!password || !confirmPassword) {
+      console.log("Password validation failed - missing fields");
       return res.status(400).json({ error: "Password and confirm password are required." });
     }
 
     if (password !== confirmPassword) {
+      console.log("Password validation failed - passwords don't match");
       return res.status(400).json({ error: "Passwords do not match." });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (password.length < 6) {
+      console.log("Password validation failed - too short");
+      return res.status(400).json({ error: "Password must be at least 6 characters long." });
+    }
+
+    // Check if mentor already exists
+    const existingMentor = await MentorModel.findOne({ email });
+    if (existingMentor) {
+      console.log("Mentor already exists with email:", email);
+      return res.status(400).json({ error: "A mentor with this email already exists." });
+    }
+
     const profilePhoto = req.file ? req.file.filename : null;
 
+    console.log("Creating new mentor with email:", email);
     const mentor = new MentorModel({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      password, // The schema's pre-save middleware will hash this
       jobTitle,
       company,
       location,
@@ -134,11 +156,30 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
       profilePhoto
     });
 
+    console.log("About to save mentor...");
     await mentor.save();
-    res.status(201).json({ message: "Mentor saved successfully!" });
+    console.log("Mentor saved successfully");
+
+    // Create and send JWT token
+    const token = jwt.sign(
+      { id: mentor._id, role: 'mentor' },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: "1h" }
+    );
+
+    res.status(201).json({ 
+      message: "Mentor registration successful!", 
+      token,
+      mentor: {
+        id: mentor._id,
+        firstName: mentor.firstName,
+        lastName: mentor.lastName,
+        email: mentor.email
+      }
+    });
   } catch (error) {
     console.error("Error saving mentor:", error);
-    res.status(500).json({ error: "Failed to save mentor" });
+    res.status(500).json({ error: "Failed to save mentor. " + error.message });
   }
 });
 
