@@ -1,9 +1,9 @@
 // src/pages/BrowseMentors.jsx (or FindMentors.jsx)
 
 // import React from "react";
-import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Input, InputGroup, InputRightElement, Button, Flex } from "@chakra-ui/react";
+import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Flex } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { FaSearch, FaStar } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import { mentors } from "../data/mentors";
 
@@ -35,7 +35,9 @@ const BrowseMentors = () => {
         
         return hasMatchingExpertise || hasMatchingRole;
       });
-    } else if (category) {
+    }
+    
+    if (category) {
       const categoryLower = category.toLowerCase();
       // Map category names to expertise keywords
       const categoryKeywords = {
@@ -64,14 +66,6 @@ const BrowseMentors = () => {
     setFilteredMentors(filtered);
   }, [searchTerm, category]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const query = e.target.search.value.trim();
-    if (query) {
-      window.location.href = `/browse/search?q=${encodeURIComponent(query)}`;
-    }
-  };
-
   return (
     <Box p={8}>
       <Box mb={8}>
@@ -85,21 +79,6 @@ const BrowseMentors = () => {
         <Text color="gray.600" mb={4}>
           {filteredMentors.length} mentors found
         </Text>
-        
-        <form onSubmit={handleSearch}>
-          <InputGroup size="lg" maxW="600px">
-            <Input
-              name="search"
-              placeholder="Search by name, role, or expertise..."
-              defaultValue={searchTerm || ""}
-            />
-            <InputRightElement width="4.5rem">
-              <Button h="1.75rem" size="sm" type="submit">
-                <Icon as={FaSearch} />
-              </Button>
-            </InputRightElement>
-          </InputGroup>
-        </form>
       </Box>
 
       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
