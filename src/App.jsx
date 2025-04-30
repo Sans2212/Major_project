@@ -6,10 +6,21 @@ import MentorProfile from "./pages/MentorProfile";
 import MentorApplicationform from './pages/MentorApplicationform';
 import MentorApplicationdone from './pages/MentorApplicationdone';
 import MenteeHome from './pages/MenteeHome';
+import ForgotPassword from './pages/ForgotPassword';
+import BrowseMentors from './pages/BrowseMentors';
 import Header from "./components/comp/Header";
 import Footer from "./components/comp/Footer";
 import { Routes, Route, useLocation } from "react-router-dom";
-import ForgotPassword from './pages/ForgotPassword';
+import AboutUs from "./pages/AboutUs";
+import ScrollToTop from "./components/comp/ScrollToTop";
+import GoToTopButton from "./components/comp/GoToTopButton";
+import HelpCenter from "./pages/HelpCenter";
+import Feedback from "./pages/Feedback";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ContactUs from "./pages/ContactUs";
+import MentorGuidelines from "./pages/MentorGuidelines";
+import MenteeGuidelines from "./pages/MenteeGuidelines";
 
 function App() {
   const location = useLocation(); // Gives the current route
@@ -22,6 +33,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       {!hideHeader && <Header />}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -31,10 +43,20 @@ function App() {
         <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
         <Route path="/mentor/done" element={<MentorApplicationdone />} />
         <Route path="/home/mentee" element={<MenteeHome />} />
-        { <Route path="/forgot-Password" element={<ForgotPassword />} /> }
-        
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/browse/:category" element={<BrowseMentors />} />
+        <Route path="/browse/search" element={<BrowseMentors />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/mentor-guidelines" element={<MentorGuidelines />} />
+        <Route path="/mentee/guidelines" element={<MenteeGuidelines />} />
       </Routes>
       <Footer />
+      <GoToTopButton />
     </>
   );
   
