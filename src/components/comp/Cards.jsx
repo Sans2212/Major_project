@@ -3,51 +3,29 @@ import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { FaStar } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-
-const mentors = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Senior Product Manager at Google",
-    rating: 4.9,
-    reviews: 127,
-    expertise: ["Product Strategy", "User Research", "Agile"],
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330"
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    role: "Engineering Lead at Microsoft",
-    rating: 4.8,
-    reviews: 94,
-    expertise: ["System Design", "Leadership", "Cloud Architecture"],
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    role: "UX Design Director at Apple",
-    rating: 5.0,
-    reviews: 156,
-    expertise: ["UI/UX", "Design Systems", "User Testing"],
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80"
-  },
-  {
-    id: 4,
-    name: "David Kim",
-    role: "Data Science Manager at Amazon",
-    rating: 4.7,
-    reviews: 83,
-    expertise: ["Machine Learning", "Analytics", "Python"],
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e"
-  }
-];
+import { mentors } from "../../data/mentors";
 
 const Cards = ({ style }) => {
   const containerRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
   const scrollPositionRef = useRef(0);
   const navigate = useNavigate();
+  
+  // Function to shuffle array
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Get random mentors for recommendation (3 mentors)
+  const [recommendedMentors] = useState(() => {
+    const shuffled = shuffleArray(mentors);
+    return shuffled.slice(0, 3);
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -149,9 +127,9 @@ const Cards = ({ style }) => {
       overflow="hidden"
       position="relative"
     >
-      {mentors.map((mentor) => renderMentorCard(mentor))}
+      {recommendedMentors.map((mentor) => renderMentorCard(mentor))}
       {/* Duplicate cards for continuous scroll */}
-      {mentors.map((mentor) => renderMentorCard(mentor, true))}
+      {recommendedMentors.map((mentor) => renderMentorCard(mentor, true))}
     </Box>
   );
 };

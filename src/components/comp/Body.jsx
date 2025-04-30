@@ -11,13 +11,14 @@ import Cards from "./Cards";
 import Hero from "../home/Hero";
 
 const tags = [
-  "Product Managers",
-  "Career Coaches", 
-  "Software Engineers",
-  "Leadership Mentors",
-  "UX Designers",
-  "Data Scientists",
-  "Startup Founders"
+  { name: "Engineering", path: "engineering" },
+  { name: "Design", path: "design" },
+  { name: "Startup", path: "startup" },
+  { name: "Product Management", path: "product" },
+  { name: "Marketing", path: "marketing" },
+  { name: "Leadership", path: "leadership" },
+  { name: "Career", path: "career" },
+  { name: "Data Science", path: "data" }
 ];
 
 const Body = () => {
@@ -26,13 +27,13 @@ const Body = () => {
   const tagHoverBgColor = useColorModeValue('gray.200', 'gray.600');
 
   const handleTagClick = (tag) => {
-    navigate(`/browse/${encodeURIComponent(tag.toLowerCase().replace(/\s+/g, "-"))}`);
+    navigate(`/browse/search?q=${tag.path}`);
   };
 
   const handleSearch = () => {
     const searchInput = document.querySelector('input[type="search"]');
     if (searchInput && searchInput.value.trim()) {
-      navigate(`/browse/${encodeURIComponent(searchInput.value.trim().toLowerCase().replace(/\s+/g, "-"))}`);
+      navigate(`/browse/search?q=${encodeURIComponent(searchInput.value.trim())}`);
     }
   };
 
@@ -86,7 +87,7 @@ const Body = () => {
                 }}
                 onClick={() => handleTagClick(tag)}
               >
-                {tag}
+                {tag.name}
               </Tag>
             ))}
           </Flex>

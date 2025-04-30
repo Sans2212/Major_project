@@ -34,6 +34,7 @@ function App() {
         <Route path="/home/mentee" element={<MenteeHome />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/browse/:category" element={<BrowseMentors />} />
+        <Route path="/browse/search" element={<BrowseMentors />} />
       </Routes>
       <Footer />
     </>

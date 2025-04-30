@@ -30,29 +30,32 @@ const Header = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Handle search submission
-  const handleSearch = () => {
-    if (searchTerm.trim() !== "") {
-      navigate(`/browse/${encodeURIComponent(searchTerm.trim().toLowerCase().replace(/\s+/g, "-"))}`);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Convert search term to lowercase and replace spaces with hyphens
+      const formattedSearch = searchTerm.toLowerCase().replace(/\s+/g, "-");
+      navigate(`/browse/search?q=${encodeURIComponent(formattedSearch)}`);
     }
   };
 
   // Handle search on Enter key
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleSearch();
+      handleSearch(e);
     }
   };
 
   // Mentor categories for the secondary navigation
   const mentorCategories = [
-    { name: "Engineering Mentors", path: "/browse/engineering" },
-    { name: "Design Mentors", path: "/browse/design" },
-    { name: "Startup Mentors", path: "/browse/startup" },
-    { name: "Product Managers", path: "/browse/product-management" },
-    { name: "Marketing Coaches", path: "/browse/marketing" },
-    { name: "Leadership Mentors", path: "/browse/leadership" },
-    { name: "Career Coaches", path: "/browse/career" },
-    { name: "Top Mentors", path: "/browse/top" },
+    { name: "Engineering Mentors", path: "/browse/search?q=engineering" },
+    { name: "Design Mentors", path: "/browse/search?q=design" },
+    { name: "Startup Mentors", path: "/browse/search?q=startup" },
+    { name: "Product Management", path: "/browse/search?q=product" },
+    { name: "Marketing", path: "/browse/search?q=marketing" },
+    { name: "Leadership", path: "/browse/search?q=leadership" },
+    { name: "Career", path: "/browse/search?q=career" },
+    { name: "Data Science", path: "/browse/search?q=data" }
   ];
 
   const handleNavigation = (path) => {

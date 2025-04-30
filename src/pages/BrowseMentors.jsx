@@ -1,93 +1,158 @@
 // src/pages/BrowseMentors.jsx (or FindMentors.jsx)
 
 // import React from "react";
-import { Box, Heading, Text, SimpleGrid, VStack, useColorModeValue } from "@chakra-ui/react";
-import { useParams } from "react-router-dom";
-
-// Dummy mentors data (replace with API data later)
-const dummyMentors = [
-  {
-    id: "engineering-mentors",
-    name: "John Doe",
-    title: "Senior Software Engineer",
-    expertise: ["JavaScript", "React", "Node.js"],
-    image: "https://static.vecteezy.com/system/resources/previews/012/177/622/original/man-avatar-isolated-png.png"
-  },
-  {
-    id: "design-mentors",
-    name: "Jane Smith",
-    title: "UX/UI Designer",
-    expertise: ["Figma", "UI Design", "User Research"],
-    image: "https://static.vecteezy.com/system/resources/previews/012/177/622/original/man-avatar-isolated-png.png"
-  },
-  // Add more dummy mentors as needed
-];
+import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Input, InputGroup, InputRightElement, Button, Flex } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
+import { FaSearch, FaStar } from "react-icons/fa";
+import { useSearchParams } from "react-router-dom";
+import { mentors } from "../data/mentors";
 
 const BrowseMentors = () => {
-  const { category } = useParams();
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const [searchParams] = useSearchParams();
+  const [filteredMentors, setFilteredMentors] = useState([]);
+  const category = searchParams.get("category");
+  const searchTerm = searchParams.get("q");
 
-  // Format the category name for display
-  const formattedCategory = category
-    ? category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-    : 'All Mentors';
+  useEffect(() => {
+    // Filter mentors based on search query or category
+    let filtered = [...mentors];
+    
+    if (searchTerm) {
+      const query = searchTerm.toLowerCase();
+      // Split the search term into individual words
+      const searchWords = query.split(/[\s-]+/);
+      
+      filtered = mentors.filter(mentor => {
+        // Check if any of the search words match exactly with expertise
+        const hasMatchingExpertise = mentor.expertise.some(skill => 
+          searchWords.some(word => 
+            skill.toLowerCase().includes(word)
+          )
+        );
+        
+        // Check if the search term matches the role
+        const hasMatchingRole = mentor.role.toLowerCase().includes(query);
+        
+        return hasMatchingExpertise || hasMatchingRole;
+      });
+    } else if (category) {
+      const categoryLower = category.toLowerCase();
+      // Map category names to expertise keywords
+      const categoryKeywords = {
+        'engineering': ['javascript', 'react', 'node.js', 'java', 'microservices', 'cloud computing', 'system design', 'cloud architecture'],
+        'design': ['ui', 'ux', 'design', 'user experience', 'user interface', 'figma', 'prototyping', 'design systems'],
+        'startup': ['startup', 'founder', 'entrepreneur', 'business strategy', 'fundraising', 'growth hacking'],
+        'product-management': ['product', 'product strategy', 'product management', 'agile', 'user research'],
+        'marketing': ['marketing', 'digital marketing', 'brand strategy', 'social media'],
+        'leadership': ['leadership', 'executive', 'management', 'team leadership', 'strategic planning'],
+        'career': ['career', 'career development', 'resume', 'interview preparation'],
+        'data-science': ['data', 'analytics', 'machine learning', 'ai', 'python', 'big data']
+      };
+
+      const keywords = categoryKeywords[categoryLower] || [categoryLower];
+      
+      filtered = mentors.filter(mentor => {
+        // Check if any of the mentor's expertise matches any of the category keywords
+        return mentor.expertise.some(skill => 
+          keywords.some(keyword => 
+            skill.toLowerCase().includes(keyword)
+          )
+        );
+      });
+    }
+    
+    setFilteredMentors(filtered);
+  }, [searchTerm, category]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = e.target.search.value.trim();
+    if (query) {
+      window.location.href = `/browse/search?q=${encodeURIComponent(query)}`;
+    }
+  };
 
   return (
-    <Box maxW="6xl" mx="auto" p={6}>
-      <VStack spacing={6} align="stretch">
-        <Heading size="xl">{formattedCategory}</Heading>
-        <Text fontSize="lg" color="gray.600">
-          Find the perfect mentor to guide you in your journey
+    <Box p={8}>
+      <Box mb={8}>
+        <Text fontSize="2xl" fontWeight="bold" mb={4}>
+          {searchTerm 
+            ? `Search Results for "${searchTerm}"` 
+            : category 
+              ? `${category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`
+              : "Browse All Mentors"}
         </Text>
+        <Text color="gray.600" mb={4}>
+          {filteredMentors.length} mentors found
+        </Text>
+        
+        <form onSubmit={handleSearch}>
+          <InputGroup size="lg" maxW="600px">
+            <Input
+              name="search"
+              placeholder="Search by name, role, or expertise..."
+              defaultValue={searchTerm || ""}
+            />
+            <InputRightElement width="4.5rem">
+              <Button h="1.75rem" size="sm" type="submit">
+                <Icon as={FaSearch} />
+              </Button>
+            </InputRightElement>
+          </InputGroup>
+        </form>
+      </Box>
 
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-          {dummyMentors.map((mentor) => (
-            <Box
-              key={mentor.id}
-              p={6}
-              borderWidth="1px"
-              borderRadius="lg"
-              bg={bgColor}
-              borderColor={borderColor}
-              _hover={{ transform: 'translateY(-4px)', shadow: 'lg' }}
-              transition="all 0.2s"
-            >
-              <VStack spacing={4} align="stretch">
-                <Box
-                  w="100%"
-                  h="200px"
-                  bg="gray.100"
-                  borderRadius="md"
-                  overflow="hidden"
-                >
-                  <img
-                    src={mentor.image}
-                    alt={mentor.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </Box>
-                <Heading size="md">{mentor.name}</Heading>
-                <Text color="gray.600">{mentor.title}</Text>
-                <Box>
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={8}>
+        {filteredMentors.map((mentor) => (
+          <Box
+            key={mentor.id}
+            p={6}
+            bg="white"
+            borderRadius="xl"
+            boxShadow="md"
+            border="1px"
+            borderColor="gray.200"
+            transition="all 0.3s ease-in-out"
+            _hover={{ 
+              transform: "scale(1.02)",
+              boxShadow: "xl"
+            }}
+          >
+            <Flex gap={4}>
+              <Avatar
+                size="xl"
+                name={mentor.name}
+                src={mentor.image}
+              />
+              <Box flex="1">
+                <Text fontWeight="bold" fontSize="lg">{mentor.name}</Text>
+                <Text color="gray.600" fontSize="md" mb={2}>{mentor.role}</Text>
+                
+                <Flex align="center" mb={3}>
+                  <Icon as={FaStar} color="yellow.400" mr={1} />
+                  <Text fontWeight="bold" mr={2}>{mentor.rating}</Text>
+                  <Text color="gray.500">({mentor.reviews} reviews)</Text>
+                </Flex>
+
+                <Flex gap={2} flexWrap="wrap">
                   {mentor.expertise.map((skill, index) => (
-                    <Text
+                    <Badge
                       key={index}
-                      as="span"
-                      mr={2}
-                      mb={2}
-                      display="inline-block"
-                      color="teal.500"
+                      colorScheme="teal"
+                      variant="subtle"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
                     >
-                      #{skill}
-                    </Text>
+                      {skill}
+                    </Badge>
                   ))}
-                </Box>
-              </VStack>
-            </Box>
-          ))}
-        </SimpleGrid>
-      </VStack>
+                </Flex>
+              </Box>
+            </Flex>
+          </Box>
+        ))}
+      </SimpleGrid>
     </Box>
   );
 };
