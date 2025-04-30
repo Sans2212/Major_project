@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { generalConnection } = require("../config/db"); // Import the general connection
 
 const MenteeSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
@@ -9,5 +10,5 @@ const MenteeSchema = new mongoose.Schema({
 
 // Add any custom validation or methods for Mentees if needed in the future
 
-const MenteeModel = mongoose.model("mentees", MenteeSchema);
+const MenteeModel = generalConnection.models.Mentee || generalConnection.model('Mentee', MenteeSchema, 'Mentee');
 module.exports = MenteeModel;

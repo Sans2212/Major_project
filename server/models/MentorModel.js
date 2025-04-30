@@ -1,16 +1,22 @@
-// server/models/MentorModel.js
-const mongoose = require('mongoose');
-const { mentorConnection } = require('../config/db');
+import mongoose from 'mongoose';
+import { mentorConnection } from '../config/db.js';
 
-// Define the schema
 const mentorSchema = new mongoose.Schema({
-  profilePhoto: Buffer,
+  profilePhoto: {
+    type: String,
+    default: null
+  },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   email: { type: String, unique: true, required: true },
+  password: {
+    type: String,
+    required: true,
+  },
+  
   jobTitle: String,
   company: String,
-  country: String,
+  location: String,
   category: String,
   skills: String,
   bio: String,
@@ -21,8 +27,6 @@ const mentorSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Register the model only once, and always with the same case: 'Mentor'
-const MentorModel = mentorConnection.models.Mentor || mentorConnection.model('Mentor', mentorSchema, 'Mentor');
+const Mentor = mentorConnection.models.Mentor || mentorConnection.model('Mentor', mentorSchema, 'Mentor');
 
-
-module.exports = MentorModel;
+export default Mentor;

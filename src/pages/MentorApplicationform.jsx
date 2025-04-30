@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,6 @@ import {
 import ReactSelect from "react-select";
 import countryList from "react-select-country-list";
 
-
 const steps = [
   { title: "About You", description: "Enter your personal details" },
   { title: "Professional Background", description: "Your work experience" },
@@ -34,6 +32,8 @@ const MentorApplicationForm = () => {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     jobTitle: "",
     company: "",
     location: "",
@@ -65,7 +65,7 @@ const MentorApplicationForm = () => {
 
   const handleNext = () => {
     const required = {
-      0: ["profilePhoto", "firstName", "lastName", "email"],
+      0: ["profilePhoto", "firstName", "lastName", "email", "password", "confirmPassword"],
       1: ["jobTitle", "company", "location"],
       2: ["category", "skills"],
       3: ["bio", "linkedin", "twitter", "website", "introVideo"],
@@ -74,9 +74,16 @@ const MentorApplicationForm = () => {
     if (required.some((f) => !formData[f])) {
       return alert("Please fill in all required fields before proceeding.");
     }
-    if (activeStep === 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      return alert("Please enter a valid email address.");
+
+    if (activeStep === 0) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        return alert("Please enter a valid email address.");
+      }
+      if (formData.password !== formData.confirmPassword) {
+        return alert("Passwords do not match.");
+      }
     }
+
     setActiveStep((s) => s + 1);
   };
 
@@ -84,14 +91,26 @@ const MentorApplicationForm = () => {
 
   const handleSubmit = async () => {
     const toSend = new FormData();
-    Object.entries(formData).forEach(([k, v]) => {
-      if (v !== null) toSend.append(k, v);
+
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (key === "profilePhoto") {
+          toSend.append(key, value);
+        } else {
+          toSend.append(key, value.toString());
+        }
+      }
     });
-  
+
+    console.log("Mentor form data before submission:");
+    for (let pair of toSend.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
+
     try {
-      // Post form data to the backend
-      await axios.post("http://localhost:3001/api/mentors/apply", toSend);
-  
+      await axios.post("http://localhost:3001/api/mentors/apply", toSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       alert("Application submitted successfully!");
       navigate("/mentor/done");
     } catch (err) {
@@ -99,84 +118,94 @@ const MentorApplicationForm = () => {
       alert(err.response?.data?.error || "Failed to submit. Please try again.");
     }
   };
-  
+
   return (
     <Box bg="#f7f9fc" minH="100vh" py={10} px={isMobile ? 4 : 16}>
-      <Heading mb={4}>Apply to Become a Mentor</Heading>
-      <Text mb={6}>
+      <Heading size="xl" color="2c3e50" mb={4}>
+        Apply to Become a Mentor
+      </Heading>
+      <Text fontSize="md" color="gray.600" mb={10}>
         Step {activeStep + 1} of {steps.length}: {steps[activeStep].title}
       </Text>
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
-        <VStack spacing={5}>
+      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" width="100%" maxW="100%">
+        <VStack spacing={5} align="stretch">
           {activeStep === 0 && (
             <>
-              <Input
-                name="profilePhoto"
-                type="file"
-                accept="image/*"
-                onChange={handleChange}
-              />
-              {formData.profilePhotoURL && (
-                <Text>
-                  Uploaded:{" "}
-                  <a
-                    href={formData.profilePhotoURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {formData.profilePhoto.name}
-                  </a>
-                </Text>
-              )}
-              <Input
-                name="firstName"
-                placeholder="First Name"
-                value={formData.firstName}
-                onChange={handleChange}
-              />
-              <Input
-                name="lastName"
-                placeholder="Last Name"
-                value={formData.lastName}
-                onChange={handleChange}
-              />
-              <Input
-                name="email"
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-              />
+              <Box>
+                <Text mb={1}>Profile Photo</Text>
+                <Input
+                  name="profilePhoto"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                />
+                {formData.profilePhotoURL && (
+                  <Text>
+                    Uploaded:{" "}
+                    <a
+                      href={formData.profilePhotoURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {formData.profilePhoto.name}
+                    </a>
+                  </Text>
+                )}
+              </Box>
+              <Box>
+                <Text mb={1}>First Name</Text>
+                <Input
+                  name="firstName"
+                  placeholder="First Name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Last Name</Text>
+                <Input
+                  name="lastName"
+                  placeholder="Last Name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Email</Text>
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Password</Text>
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="Enter Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Confirm Password</Text>
+                <Input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+              </Box>
             </>
           )}
 
           {activeStep === 1 && (
             <>
-
-              <Input
-                name="jobTitle"
-                placeholder="Job Title"
-                value={formData.jobTitle}
-                onChange={handleChange}
-              />
-              <Input
-                name="company"
-                placeholder="Company"
-                value={formData.company}
-                onChange={handleChange}
-              />
-              <ReactSelect
-                name="location"
-                options={countryOptions}
-                value={countryOptions.find(
-                  (opt) => opt.value === formData.location
-                )}
-                onChange={(opt) =>
-                  setFormData((p) => ({ ...p, location: opt.value }))
-                }
-              />
-
               <Box>
                 <Text mb={1}>Job Title</Text>
                 <Input
@@ -196,85 +225,102 @@ const MentorApplicationForm = () => {
                 />
               </Box>
               <Box>
-                <Text mb={1}>country</Text>
+                <Text mb={1}>Location</Text>
                 <ReactSelect
                   name="location"
                   options={countryOptions}
                   placeholder="Select your country"
                   value={countryOptions.find(
-                    (option) => option.value === formData.location
+                    (opt) => opt.value === formData.location
                   )}
-                  onChange={(selectedOption) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      location: selectedOption.value,
-                    }))
+                  onChange={(opt) =>
+                    setFormData((p) => ({ ...p, location: opt.value }))
                   }
                 />
               </Box>
-
             </>
           )}
 
           {activeStep === 2 && (
             <>
-              <Select
-                name="category"
-                placeholder="Select category"
-                value={formData.category}
-                onChange={handleChange}
-              >
-                <option>Engineering & Data</option>
-                <option>UX & Design</option>
-                <option>Business & Management</option>
-                <option>Product & Marketing</option>
-              </Select>
-              <Input
-                name="skills"
-                placeholder="Skills (comma separated)"
-                value={formData.skills}
-                onChange={handleChange}
-              />
+              <Box>
+                <Text mb={1}>Mentoring Category</Text>
+                <Select
+                  name="category"
+                  placeholder="Select category"
+                  value={formData.category}
+                  onChange={handleChange}
+                >
+                  <option>Engineering & Data</option>
+                  <option>UX & Design</option>
+                  <option>Business & Management</option>
+                  <option>Product & Marketing</option>
+                </Select>
+              </Box>
+              <Box>
+                <Text mb={1}>Skills</Text>
+                <Input
+                  name="skills"
+                  placeholder="List your skills (comma separated)"
+                  value={formData.skills}
+                  onChange={handleChange}
+                />
+              </Box>
             </>
           )}
 
           {activeStep === 3 && (
             <>
-              <Textarea
-                name="bio"
-                placeholder="Short Bio"
-                value={formData.bio}
-                onChange={handleChange}
-              />
-              <Input
-                name="linkedin"
-                placeholder="LinkedIn URL"
-                value={formData.linkedin}
-                onChange={handleChange}
-              />
-              <Input
-                name="twitter"
-                placeholder="Twitter Handle"
-                value={formData.twitter}
-                onChange={handleChange}
-              />
-              <Input
-                name="website"
-                placeholder="Website URL"
-                value={formData.website}
-                onChange={handleChange}
-              />
-              <Input
-                name="introVideo"
-                placeholder="Intro Video URL"
-                value={formData.introVideo}
-                onChange={handleChange}
-              />
+              <Box>
+                <Text mb={1}>Short Bio</Text>
+                <Textarea
+                  name="bio"
+                  placeholder="Write your short bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>LinkedIn URL</Text>
+                <Input
+                  name="linkedin"
+                  placeholder="https://www.linkedin.com/in/yourprofile"
+                  value={formData.linkedin}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Twitter Handle</Text>
+                <Input
+                  name="twitter"
+                  placeholder="@yourhandle"
+                  value={formData.twitter}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Personal Website URL</Text>
+                <Input
+                  name="website"
+                  placeholder="https://yourwebsite.com"
+                  value={formData.website}
+                  onChange={handleChange}
+                />
+              </Box>
+              <Box>
+                <Text mb={1}>Intro Video URL</Text>
+                <Input
+                  name="introVideo"
+                  placeholder="Link to your intro video"
+                  value={formData.introVideo}
+                  onChange={handleChange}
+                />
+              </Box>
             </>
           )}
         </VStack>
 
-        <Divider my={6} />
+        <Divider my={8} />
 
         <HStack justify="space-between">
           {activeStep > 0 && (
