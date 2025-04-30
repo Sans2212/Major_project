@@ -34,6 +34,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log("Login attempt with:", { email, role, passwordLength: loginPassword.length });
 
     try {
       const response = await fetch("http://localhost:3001/api/auth/login", {
@@ -42,28 +43,30 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password: loginPassword, role }),
+        body: JSON.stringify({ 
+          email: email.trim(),
+          password: loginPassword,
+          role: role.trim()
+        }),
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
         const { token } = data;
-
-        // Save JWT token in localStorage
         localStorage.setItem('authToken', token);
 
-        // Redirect user based on role
         if (role === "mentee") {
           navigate("/home/mentee");
         } else {
           navigate("/home/mentor");
         }
       } else {
-        const errorData = await response.json();
-        alert("Login failed: " + errorData.error);
+        console.error("Login failed:", data.error);
+        alert(data.error || "Login failed. Please try again.");
       }
     } catch (error) {
-      console.error("Error logging in:", error);
+      console.error("Error during login:", error);
       alert("Error logging in. Please try again.");
     }
   };
@@ -172,13 +175,14 @@ const Login = () => {
           <form onSubmit={handleLogin}>
             <VStack spacing={4} mb={4}>
               <Box w="full">
-                <Text mb={1}>Email or Username</Text>
+                <Text mb={1}>Email</Text>
                 <Input
-                  type="text"
+                  type="email"
                   id="email"
                   name="email"
-                  placeholder="Enter your email or username"
+                  placeholder="Enter your email"
                   required
+                  autoComplete="email"
                   focusBorderColor="teal.500"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -192,6 +196,7 @@ const Login = () => {
                   name="password"
                   placeholder="Password"
                   required
+                  autoComplete="current-password"
                   focusBorderColor="teal.500"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
