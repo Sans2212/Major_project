@@ -183,4 +183,127 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
   }
 });
 
+// ---------------------- Profile Routes ----------------------
+
+router.get("/profile/:mentorId", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findById(req.params.mentorId).select('-password');
+    
+    if (!mentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json(mentor);
+  } catch (error) {
+    console.error("Error fetching mentor profile:", error);
+    res.status(500).json({ error: "Error fetching mentor profile" });
+  }
+});
+
+router.put("/profile/:mentorId", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const { mentorId } = req.params;
+    const updateData = req.body;
+
+    // Remove sensitive fields from update data
+    delete updateData.password;
+    delete updateData.email;
+
+    const updatedMentor = await MentorModel.findByIdAndUpdate(
+      mentorId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedMentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json(updatedMentor);
+  } catch (error) {
+    console.error("Error updating mentor profile:", error);
+    res.status(500).json({ error: "Error updating mentor profile" });
+  }
+});
+
+// Get all mentors (for browse mentors page)
+router.get("/browse", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentors = await MentorModel.find({})
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    res.json(mentors);
+  } catch (error) {
+    console.error("Error fetching mentors:", error);
+    res.status(500).json({ error: "Error fetching mentors" });
+  }
+});
+
+// Get mentor by email
+router.get("/profile-by-email/:email", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findOne({ email: req.params.email }).select('-password');
+    
+    if (!mentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json({ mentorId: mentor._id });
+  } catch (error) {
+    console.error("Error fetching mentor:", error);
+    res.status(500).json({ error: "Error fetching mentor" });
+  }
+});
+
+// Get mentor by username
+router.get("/profile/username/:username", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findOne({ username: req.params.username }).select('-password');
+    
+    if (!mentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json(mentor);
+  } catch (error) {
+    console.error("Error fetching mentor:", error);
+    res.status(500).json({ error: "Error fetching mentor" });
+  }
+});
+
+// Search mentors
+router.get("/search", async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const { q } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+
+    const searchRegex = new RegExp(q, 'i');
+    const mentors = await MentorModel.find({
+      $or: [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { username: searchRegex },
+        { jobTitle: searchRegex },
+        { skills: searchRegex },
+        { bio: searchRegex }
+      ]
+    }).select('-password').limit(20);
+
+    res.json(mentors);
+  } catch (error) {
+    console.error("Error searching mentors:", error);
+    res.status(500).json({ error: "Error searching mentors" });
+  }
+});
+
 export default router;

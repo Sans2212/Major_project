@@ -108,10 +108,20 @@ const MentorApplicationForm = () => {
     }
 
     try {
-      await axios.post("http://localhost:3001/api/mentors/apply", toSend, {
+      const response = await axios.post("http://localhost:3001/api/mentors/apply", toSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      
+      // Store email in localStorage
+      localStorage.setItem('mentorEmail', formData.email);
+      
+      // Store the token if your backend sends one
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+
       alert("Application submitted successfully!");
+      // Redirect to congrats page
       navigate("/mentor/done");
     } catch (err) {
       console.error("Error submitting application:", err.response || err);
