@@ -4,12 +4,13 @@
 import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Flex } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { FaStar } from "react-icons/fa";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { mentors } from "../data/mentors";
 
 const BrowseMentors = () => {
   const [searchParams] = useSearchParams();
   const [filteredMentors, setFilteredMentors] = useState([]);
+  const navigate = useNavigate();
   const category = searchParams.get("category");
   const searchTerm = searchParams.get("q");
 
@@ -66,6 +67,10 @@ const BrowseMentors = () => {
     setFilteredMentors(filtered);
   }, [searchTerm, category]);
 
+  const handleMentorClick = (mentorId) => {
+    navigate(`/mentors/${mentorId}`);
+  };
+
   return (
     <Box p={8}>
       <Box mb={8}>
@@ -92,6 +97,8 @@ const BrowseMentors = () => {
             border="1px"
             borderColor="gray.200"
             transition="all 0.3s ease-in-out"
+            cursor="pointer"
+            onClick={() => handleMentorClick(mentor.id)}
             _hover={{ 
               transform: "scale(1.02)",
               boxShadow: "xl"

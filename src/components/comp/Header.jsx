@@ -25,6 +25,7 @@ import {
 import { SearchIcon, HamburgerIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/main_logo.png";
+import axios from "axios";
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,12 +35,24 @@ const Header = () => {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Handle search submission
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Convert search term to lowercase and replace spaces with hyphens
-      const formattedSearch = searchTerm.toLowerCase().replace(/\s+/g, "-");
-      navigate(`/browse/search?q=${encodeURIComponent(formattedSearch)}`);
+      try {
+        const response = await axios.get(`http://localhost:3001/api/mentors/search?q=${encodeURIComponent(searchTerm.trim())}`);
+        const mentors = response.data;
+        
+        if (mentors.length === 1) {
+          // If exact match, go directly to mentor's profile
+          navigate(`/mentors/${mentors[0].username}`);
+        } else {
+          // Otherwise, go to search results page
+          navigate(`/browse/search?q=${encodeURIComponent(searchTerm.trim())}`);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        navigate(`/browse/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      }
     }
   };
 

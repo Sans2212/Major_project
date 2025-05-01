@@ -59,7 +59,7 @@ const Login = () => {
         if (role === "mentee") {
           navigate("/home/mentee");
         } else {
-          navigate("/home/mentor");
+          navigate("/my-profile");
         }
       } else {
         console.error("Login failed:", data.error);

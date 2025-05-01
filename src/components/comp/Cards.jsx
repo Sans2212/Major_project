@@ -59,7 +59,10 @@ const Cards = ({ style }) => {
   }, [isPaused]);
 
   const handleCardClick = (mentorId) => {
-    navigate(`/mentor/${mentorId}`);
+    navigate(`/mentors/${mentorId}`, { 
+      state: { fromCards: true },
+      replace: false 
+    });
   };
 
   const renderMentorCard = (mentor, isDuplicate = false) => (
