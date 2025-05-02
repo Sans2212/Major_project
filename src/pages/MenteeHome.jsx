@@ -17,8 +17,9 @@ import { useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import logo from "../assets/main_logo.png";
 import { mentors } from "../data/mentors";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProfileDropdown from '../components/comp/ProfileDropdown';
+import axios from 'axios';
 
 const MenteeHome = () => {
   const navigate = useNavigate();
@@ -28,6 +29,25 @@ const MenteeHome = () => {
     const shuffled = [...mentors].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 3);
   });
+  const [firstName, setFirstName] = useState('');
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get('http://localhost:3001/api/mentees/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Get first name from full name
+        const first = response.data.fullName.split(' ')[0];
+        setFirstName(first);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const handleMentorClick = (mentorId) => {
     navigate(`/mentors/${mentorId}`);
@@ -35,10 +55,6 @@ const MenteeHome = () => {
 
   return (
     <Box minH="100vh" bg="gray.50">
-      <Flex p={4} align="center">
-        <Spacer />
-        <ProfileDropdown />
-      </Flex>
       {/* Header */}
       <Flex
         bgGradient="linear(to-r, teal.600, green.600)"
@@ -48,14 +64,17 @@ const MenteeHome = () => {
         align="center"
         justify="space-between"
       >
-        <Image
-          src={logo}
-          alt="Mentor Connect Logo"
-          boxSize="60px"
-          cursor="pointer"
-          onClick={() => navigate("/")}
-        />
-        <Heading size="md">Welcome, Mentee!</Heading>
+        <HStack spacing={4}>
+          <Image
+            src={logo}
+            alt="Mentor Connect Logo"
+            boxSize="60px"
+            cursor="pointer"
+            onClick={() => navigate("/")}
+          />
+          <Heading size="md">Welcome {firstName || 'Mentee'}!</Heading>
+        </HStack>
+        <ProfileDropdown />
       </Flex>
 
       {/* Main Content */}
