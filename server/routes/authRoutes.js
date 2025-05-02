@@ -1,45 +1,60 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
 router.post("/login", async (req, res) => {
-  console.log("Login request body:", req.body);
+  console.log("=== Login Attempt ===");
+  console.log("Request body:", req.body);
   let { email, password, role } = req.body;
 
   if (!email || !password || !role) {
+    console.log("Missing required fields:", { email: !!email, password: !!password, role: !!role });
     return res.status(400).json({ error: "Email, password, and role are required" });
   }
 
-  // Normalize role
+  // Normalize role and email
   role = role.trim().toLowerCase();
-  console.log("Login attempt with role:", role);
+  email = email.trim().toLowerCase();
+  
+  console.log("Normalized credentials:", { email, role });
 
   try {
     const model = role === "mentor" ? req.models.MentorModel : req.models.UserModel;
     console.log("Using model:", model ? model.modelName : "none");
+    
     if (!model) {
+      console.log("Invalid role provided");
       return res.status(400).json({ error: "Invalid role provided" });
     }
 
     const user = await model.findOne({ email });
-
+    console.log("User found:", user ? "Yes" : "No");
+    
     if (!user) {
+      console.log("User not found for email:", email);
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isPasswordValid =
-      await bcrypt.compare(password, user.password);
+    console.log("Stored password hash:", user.password);
+    console.log("Attempting password validation...");
+    
+    const isPasswordValid = await user.isValidPassword(password);
+    console.log("Password validation result:", isPasswordValid);
+
     if (!isPasswordValid) {
+      console.log("Invalid password for user:", email);
       return res.status(400).json({ error: "Invalid password" });
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      { id: user._id, role },
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: "1h" }
     );
+
+    console.log("Login successful, sending response");
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -47,10 +62,20 @@ router.post("/login", async (req, res) => {
       sameSite: "Strict",
     });
 
-    res.json({ message: "Login successful", token });
+    res.json({ 
+      message: "Login successful", 
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName || user.fullName,
+        lastName: user.lastName,
+        email: user.email,
+        role
+      }
+    });
   } catch (err) {
-    console.error("Login error:", err.message);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Internal server error: " + err.message });
   }
 });
 

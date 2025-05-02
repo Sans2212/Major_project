@@ -3,11 +3,105 @@ export const mentors = [
   {
     id: 1,
     name: "Sarah Johnson",
-    role: "Senior Product Manager at Google",
+    role: "Senior Software Engineer",
     rating: 4.9,
-    reviews: 127,
-    expertise: ["Product Strategy", "User Research", "Agile"],
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330"
+    reviews: 128,
+    responseTime: "Usually responds in a few hours",
+    lastActive: "Active recently",
+    image: "https://randomuser.me/api/portraits/women/1.jpg",
+    calendlyUrl: "https://calendly.com/jainsanskruti123",
+    expertise: ["JavaScript", "React", "Node.js", "System Design"],
+    about: "Hi! I'm Sarah, a Senior Software Engineer with 8 years of experience. I specialize in full-stack JavaScript development and have mentored over 100 developers. I'm passionate about helping others grow in their careers and sharing my knowledge.",
+    plans: [
+      {
+        name: "Lite Plan",
+        price: 240,
+        description: "For mentees who just started their career or experienced ones looking to get to the next level.",
+        features: [
+          "2 calls per month (60min/call)",
+          "Unlimited Q&A via chat",
+          "Expect responses in 24 hours or less",
+          "Hands-on support"
+        ],
+        calendlyEventType: "new-meeting-1"
+      },
+      {
+        name: "Standard Plan",
+        price: 300,
+        description: "For mentees who want more personalized guidance and support.",
+        features: [
+          "4 calls per month (60min/call)",
+          "Unlimited Q&A via chat",
+          "Expect responses in 12 hours or less",
+          "Hands-on support",
+          "Code review"
+        ],
+        calendlyEventType: "new-meeting-1"
+      },
+      {
+        name: "Pro Plan",
+        price: 500,
+        description: "For mentees who want to build an application under my guidance from inception till the deployment.",
+        features: [
+          "6 calls per month (60min/call)",
+          "Unlimited Q&A via chat",
+          "Expect responses in 6 hours or less",
+          "Hands-on support",
+          "Code review",
+          "Project architecture guidance"
+        ],
+        calendlyEventType: "new-meeting-1"
+      }
+    ],
+    sessions: [
+      {
+        name: "Introductory Call",
+        duration: "15 minutes",
+        price: 39,
+        description: "If you're looking for a mentor, and you're just not sure about how this all works – this one is for you.",
+        calendlyEventType: "15-min-call"
+      },
+      {
+        name: "Ask me Anything",
+        duration: "45 minutes",
+        price: 120,
+        description: "This session is very open-ended and provides an excellent opportunity to ask any questions to an expert.",
+        calendlyEventType: "45-min-call"
+      },
+      {
+        name: "Mock Interview",
+        duration: "60 minutes",
+        price: 150,
+        description: "This session is for those aspiring professionals who want to get a taste of how the interview looks like at big companies.",
+        calendlyEventType: "new-meeting-1"
+      }
+    ],
+    testimonials: [
+      {
+        name: "John Doe",
+        rating: 5,
+        date: "October 4, 2024",
+        content: "Sarah is an excellent mentor! She helped me improve my skills and provided valuable guidance throughout my journey."
+      },
+      {
+        name: "Jane Smith",
+        rating: 5,
+        date: "August 23, 2024",
+        content: "Really enjoyed my sessions with Sarah! She explained complex concepts in a simple way and provided great learning resources."
+      }
+    ],
+    articles: [
+      {
+        title: "Getting Started in Your Career",
+        type: "Article",
+        description: "Learn the essential steps to kickstart your career in the tech industry."
+      },
+      {
+        title: "Interview Preparation Guide",
+        type: "Link",
+        description: "A comprehensive guide to help you prepare for technical interviews."
+      }
+    ]
   },
   {
     id: 2,

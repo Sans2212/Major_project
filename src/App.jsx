@@ -21,6 +21,7 @@ import TermsOfService from "./pages/TermsOfService";
 import ContactUs from "./pages/ContactUs";
 import MentorGuidelines from "./pages/MentorGuidelines";
 import MenteeGuidelines from "./pages/MenteeGuidelines";
+import RedirectToProfile from "./pages/RedirectToProfile";
 
 function App() {
   const location = useLocation(); // Gives the current route
@@ -29,7 +30,8 @@ function App() {
   const hideHeader =
     location.pathname === "/login" ||
     location.pathname === "/signup/mentee" ||
-    location.pathname === "/home/mentee";
+    location.pathname === "/home/mentee" ||
+    location.pathname === "/mentor/done";
 
   return (
     <>
@@ -54,6 +56,7 @@ function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/mentor-guidelines" element={<MentorGuidelines />} />
         <Route path="/mentee/guidelines" element={<MenteeGuidelines />} />
+        <Route path="/my-profile" element={<RedirectToProfile />} />
       </Routes>
       <Footer />
       <GoToTopButton />

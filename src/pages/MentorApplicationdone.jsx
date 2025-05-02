@@ -18,7 +18,7 @@ const MentorApplicationdone = () => {
           🎉 Congratulations!
         </Heading>
         <Text fontSize="xl" color="gray.700" maxW="600px">
-          You’re officially a mentor now! Thank you for taking the step to guide and inspire others.
+          You&apos;re officially a mentor now! Thank you for taking the step to guide and inspire others.
         </Text>
         <Text fontSize="md" color="gray.500">
           Your profile is under review and will be live shortly.
@@ -27,9 +27,9 @@ const MentorApplicationdone = () => {
         <Button
           colorScheme="purple"
           size="lg"
-          onClick={() => navigate("/")} // You can change the route
+          onClick={() => navigate("/login")}
         >
-          Go to Dashboard
+          Go to Login Page
         </Button>
       </VStack>
     </Box>
