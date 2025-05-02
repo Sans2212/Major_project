@@ -97,44 +97,39 @@ const MentorProfile = () => {
           return;
         }
 
-        // If not static, proceed with API call
-        let response;
+        // If not static, try to fetch by ID first
         try {
-          response = await axios.get(`http://localhost:3001/api/mentors/profile/username/${mentorId}`);
-        } catch (err) {
-          if (err.response?.status === 404) {
-            response = await axios.get(`http://localhost:3001/api/mentors/profile/${mentorId}`);
-          } else {
-            throw err;
-          }
+          const response = await axios.get(`http://localhost:3001/api/mentors/profile/${mentorId}`);
+          const mentorData = response.data;
+          
+          const mentorWithDefaults = {
+            ...mentorData,
+            name: `${mentorData.firstName} ${mentorData.lastName}`,
+            about: mentorData.bio || "No description available",
+            role: mentorData.jobTitle || "Mentor",
+            image: mentorData.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentorData.profilePhoto}` : null,
+            plans: mentorData.plans || [],
+            sessions: mentorData.sessions || [],
+            testimonials: mentorData.testimonials || [],
+            articles: mentorData.articles || [],
+            experience: mentorData.experience || [],
+            education: mentorData.education || [],
+            certifications: mentorData.certifications || [],
+            expertiseDetails: mentorData.expertiseDetails || [],
+            languages: mentorData.languages || [],
+            expertise: mentorData.skills ? mentorData.skills.split(',').map(skill => skill.trim()) : [],
+            calendlyUrl: mentorData.calendlyUrl || null,
+            rating: mentorData.rating || 0,
+            reviews: mentorData.reviews || 0,
+            responseTime: mentorData.responseTime || "Not specified",
+            lastActive: mentorData.lastActive ? new Date(mentorData.lastActive).toLocaleDateString() : "Recently"
+          };
+
+          setMentor(mentorWithDefaults);
+        } catch (error) {
+          console.error('Error fetching mentor by ID:', error);
+          throw error; // Re-throw to be caught by outer catch
         }
-        
-        const mentorData = response.data;
-
-        const mentorWithDefaults = {
-          ...mentorData,
-          name: `${mentorData.firstName} ${mentorData.lastName}`,
-          about: mentorData.bio || "No description available",
-          role: mentorData.jobTitle || "Mentor",
-          image: mentorData.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentorData.profilePhoto}` : null,
-          plans: mentorData.plans || [],
-          sessions: mentorData.sessions || [],
-          testimonials: mentorData.testimonials || [],
-          articles: mentorData.articles || [],
-          experience: mentorData.experience || [],
-          education: mentorData.education || [],
-          certifications: mentorData.certifications || [],
-          expertiseDetails: mentorData.expertiseDetails || [],
-          languages: mentorData.languages || [],
-          expertise: mentorData.skills ? mentorData.skills.split(',').map(skill => skill.trim()) : [],
-          calendlyUrl: mentorData.calendlyUrl || null,
-          rating: mentorData.rating || 0,
-          reviews: mentorData.reviews || 0,
-          responseTime: mentorData.responseTime || "Not specified",
-          lastActive: mentorData.lastActive ? new Date(mentorData.lastActive).toLocaleDateString() : "Recently"
-        };
-
-        setMentor(mentorWithDefaults);
       } catch (error) {
         console.error('Error fetching mentor data:', error);
         setError(error.response?.data?.message || "Error loading mentor profile");

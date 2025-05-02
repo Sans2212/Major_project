@@ -48,7 +48,7 @@ const ProfileDropdown = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const toast = useToast();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
 
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
@@ -118,44 +118,87 @@ const ProfileDropdown = () => {
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('profilePhoto', file);
+    if (!file) return;
 
-      try {
-        const token = localStorage.getItem('authToken');
-        const endpoint = user.role === 'mentee'
-          ? 'http://localhost:3001/api/mentees/upload-photo'
-          : 'http://localhost:3001/api/mentors/upload-photo';
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please upload an image file",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
 
-        const response = await axios.post(endpoint, formData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size should be less than 5MB",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profilePhoto', file);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to upload a photo",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
         });
+        return;
+      }
 
-        setPreviewUrl(URL.createObjectURL(file));
-        setFormData(prev => ({
+      const response = await axios.post(
+        'http://localhost:3001/api/mentees/upload-photo',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.user) {
+        // Update the user context with new photo
+        setUser(prev => ({
           ...prev,
-          profilePhoto: response.data.filename
+          profilePhoto: response.data.user.profilePhoto
         }));
 
+        // Update the preview URL
+        setPreviewUrl(`http://localhost:3001${response.data.user.profilePhoto}`);
+
         toast({
-          title: 'Success',
-          description: 'Photo uploaded successfully',
-          status: 'success',
+          title: "Success",
+          description: "Photo uploaded successfully",
+          status: "success",
           duration: 3000,
-        });
-      } catch (error) {
-        console.error('Error uploading photo:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to upload photo',
-          status: 'error',
-          duration: 3000,
+          isClosable: true,
         });
       }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      console.error('Error details:', error.response?.data);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to upload photo",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -163,13 +206,28 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:3001/api/mentees/remove-photo'
-        : 'http://localhost:3001/api/mentors/remove-photo';
+        ? 'http://localhost:3001/api/mentees/profile/photo'
+        : 'http://localhost:3001/api/mentors/profile/photo';
 
-      await axios.delete(endpoint, {
+      const response = await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      if (response.data.user) {
+        // Update the user context with the updated user data
+        setUser(prev => ({
+          ...prev,
+          ...response.data.user
+        }));
+      } else {
+        // Fallback to just removing the photo
+        setUser(prev => ({
+          ...prev,
+          profilePhoto: null
+        }));
+      }
+
+      // Update local state
       setPreviewUrl('');
       setFormData(prev => ({
         ...prev,
@@ -184,11 +242,13 @@ const ProfileDropdown = () => {
       });
     } catch (error) {
       console.error('Error removing photo:', error);
+      console.error('Error details:', error.response?.data);
       toast({
         title: 'Error',
-        description: 'Failed to remove photo',
+        description: error.response?.data?.details || error.response?.data?.error || 'Failed to remove photo',
         status: 'error',
-        duration: 3000,
+        duration: 5000,
+        isClosable: true,
       });
     }
   };

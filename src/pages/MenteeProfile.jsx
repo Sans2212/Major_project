@@ -31,6 +31,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { FaGraduationCap, FaBriefcase, FaEdit } from "react-icons/fa";
 import { fetchMenteeProfile, updateMenteeProfile } from "../utils/profileUtils";
+import axios from "axios";
 
 const MenteeProfile = () => {
   const { user } = useAuth();
@@ -48,6 +49,8 @@ const MenteeProfile = () => {
     profilePhoto: user?.profilePhoto || "",
   });
   const [editedProfile, setEditedProfile] = useState({...profile});
+  const [error, setError] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const bgColor = useColorModeValue("white", "gray.700");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -96,6 +99,81 @@ const MenteeProfile = () => {
     }));
   };
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size should be less than 5MB');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profilePhoto', file);
+
+    try {
+      setError(null);
+      const response = await axios.post(
+        'http://localhost:3001/api/mentees/upload-photo',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (response.data.user) {
+        setEditedProfile(prev => ({
+          ...prev,
+          profilePhoto: response.data.user.profilePhoto
+        }));
+        setPhotoPreview(URL.createObjectURL(file));
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      setError(error.response?.data?.message || 'Error uploading photo');
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setEditedProfile(prev => ({
+        ...prev,
+        profilePhoto: null
+      }));
+
+      toast({
+        title: "Success",
+        description: "Photo removed successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to remove photo",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleSaveProfile = async () => {
     try {
       setIsLoading(true);
@@ -106,7 +184,7 @@ const MenteeProfile = () => {
       Object.keys(editedProfile).forEach(key => {
         if (key === "interests" && Array.isArray(editedProfile[key])) {
           formData.append(key, JSON.stringify(editedProfile[key]));
-        } else {
+        } else if (key !== "profilePhoto") { // Don't send profile photo here as it's handled separately
           formData.append(key, editedProfile[key]);
         }
       });
@@ -135,16 +213,6 @@ const MenteeProfile = () => {
     }
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setEditedProfile(prev => ({
-        ...prev,
-        profilePhoto: file
-      }));
-    }
-  };
-
   return (
     <Box minH="100vh" py={10} bg={useColorModeValue("gray.50", "gray.900")}>
       <Container maxW="container.md">
@@ -163,7 +231,7 @@ const MenteeProfile = () => {
               <Avatar
                 size="2xl"
                 name={profile.fullName}
-                src={profile.profilePhoto ? `http://localhost:3001/uploads/mentees/${profile.profilePhoto}` : undefined}
+                src={profile.profilePhoto ? `http://localhost:3001${profile.profilePhoto}` : undefined}
               />
               <Heading size="lg">{profile.fullName}</Heading>
               <Text color={textColor} textAlign="center">{profile.bio || "No bio added yet"}</Text>
@@ -235,11 +303,23 @@ const MenteeProfile = () => {
               <VStack spacing={4}>
                 <FormControl>
                   <FormLabel>Profile Photo</FormLabel>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                  />
+                  <VStack spacing={2}>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                    />
+                    {editedProfile.profilePhoto && (
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        variant="outline"
+                        onClick={handleRemovePhoto}
+                      >
+                        Remove Photo
+                      </Button>
+                    )}
+                  </VStack>
                 </FormControl>
 
                 <FormControl>
