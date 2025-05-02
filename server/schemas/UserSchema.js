@@ -6,6 +6,12 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   role: String,
+  interests: [{ type: String }],
+  bio: String,
+  profilePhoto: {
+    url: String,
+    publicId: String
+  },
   createdAt: { type: Date, default: Date.now },
   otp: String,
   otpExpiry: Date,
