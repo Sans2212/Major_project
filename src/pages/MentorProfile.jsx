@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { mentors as staticMentors } from "../data/mentors";
 import { 
   Box, 
   Image, 
@@ -42,11 +43,14 @@ import {
 import { useState, useEffect } from "react";
 import { InlineWidget } from "react-calendly";
 import axios from 'axios';
+import { useAuth } from "../context/AuthContext";
+import RatingModal from "../components/comp/RatingModal";
 
 const MentorProfile = () => {
   const { mentorId } = useParams();
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isScheduleOpen, onOpen: onScheduleOpen, onClose: onScheduleClose } = useDisclosure();
+  const { isOpen: isRatingOpen, onOpen: onRatingOpen, onClose: onRatingClose } = useDisclosure();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [mentor, setMentor] = useState(null);
@@ -54,6 +58,7 @@ const MentorProfile = () => {
   const [error, setError] = useState(null);
   const cardBg = useColorModeValue("gray.50", "gray.700");
   const testimonialBg = useColorModeValue("white", "gray.800");
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchMentorData = async () => {
@@ -61,7 +66,38 @@ const MentorProfile = () => {
         setIsLoading(true);
         setError(null);
         
-        // Try to fetch by username first, if that fails, try by ID
+        // Check if this is a static mentor
+        if (mentorId.startsWith('static/')) {
+          const staticId = parseInt(mentorId.split('/')[1]);
+          const staticMentor = staticMentors.find(m => m.id === staticId);
+          
+          if (!staticMentor) {
+            throw new Error("Mentor not found");
+          }
+
+          // Transform static mentor data to match the expected format
+          const mentorWithDefaults = {
+            ...staticMentor,
+            about: staticMentor.about || "No description available",
+            plans: staticMentor.plans || [],
+            sessions: staticMentor.sessions || [],
+            testimonials: staticMentor.testimonials || [],
+            articles: staticMentor.articles || [],
+            experience: staticMentor.experience || [],
+            education: staticMentor.education || [],
+            certifications: staticMentor.certifications || [],
+            expertiseDetails: staticMentor.expertiseDetails || [],
+            languages: staticMentor.languages || [],
+            calendlyUrl: staticMentor.calendlyUrl || null,
+            responseTime: staticMentor.responseTime || "Not specified",
+            lastActive: staticMentor.lastActive || "Recently"
+          };
+
+          setMentor(mentorWithDefaults);
+          return;
+        }
+
+        // If not static, proceed with API call
         let response;
         try {
           response = await axios.get(`http://localhost:3001/api/mentors/profile/username/${mentorId}`);
@@ -98,11 +134,10 @@ const MentorProfile = () => {
           lastActive: mentorData.lastActive ? new Date(mentorData.lastActive).toLocaleDateString() : "Recently"
         };
 
-        console.log('Fetched mentor data:', mentorWithDefaults);
         setMentor(mentorWithDefaults);
-      } catch (err) {
-        console.error('Error fetching mentor data:', err);
-        setError(err.response?.data?.message || "Error loading mentor profile");
+      } catch (error) {
+        console.error('Error fetching mentor data:', error);
+        setError(error.response?.data?.message || "Error loading mentor profile");
       } finally {
         setIsLoading(false);
       }
@@ -120,7 +155,7 @@ const MentorProfile = () => {
     }
     setSelectedPlan(plan);
     setSelectedSession(session);
-    onOpen();
+    onScheduleOpen();
   };
 
   const getCalendlyUrl = () => {
@@ -132,6 +167,15 @@ const MentorProfile = () => {
       return `${mentor.calendlyUrl}/${selectedSession.calendlyEventType}`;
     }
     return mentor.calendlyUrl;
+  };
+
+  const handleRatingSubmit = (newRating) => {
+    // Update the local state with the new rating
+    setMentor(prev => ({
+      ...prev,
+      rating: ((prev.rating * prev.reviews) + newRating) / (prev.reviews + 1),
+      reviews: prev.reviews + 1
+    }));
   };
 
   if (isLoading) {
@@ -188,7 +232,18 @@ const MentorProfile = () => {
               <HStack mt={2} spacing={4}>
                 <HStack>
                   <Icon as={StarIcon} color="yellow.400" />
-                  <Text color="gray.600">{mentor.rating} ({mentor.reviews} reviews)</Text>
+                  <Text color="gray.600">{mentor.rating.toFixed(1)} ({mentor.reviews} reviews)</Text>
+                  {user?.role === 'mentee' && (
+                    <Button
+                      size="sm"
+                      colorScheme="yellow"
+                      leftIcon={<StarIcon />}
+                      onClick={onRatingOpen}
+                      ml={2}
+                    >
+                      Rate Mentor
+                    </Button>
+                  )}
                 </HStack>
                 {mentor.responseTime && (
                   <HStack>
@@ -601,34 +656,32 @@ const MentorProfile = () => {
         </GridItem>
       </Grid>
 
-      {/* Calendly Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="full">
+      {/* Rating Modal */}
+      {mentor && (
+        <RatingModal
+          isOpen={isRatingOpen}
+          onClose={onRatingClose}
+          mentorId={mentorId}
+          mentorName={mentor.name}
+          onRatingSubmit={handleRatingSubmit}
+        />
+      )}
+
+      {/* Scheduling Modal */}
+      <Modal isOpen={isScheduleOpen} onClose={onScheduleClose} size="xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>
-            Schedule a Call with {mentor.name}
-            {selectedPlan && ` - ${selectedPlan.name} Plan`}
-            {selectedSession && ` - ${selectedSession.name}`}
-          </ModalHeader>
+          <ModalHeader>Schedule a Call</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <Box h="700px">
-              <InlineWidget
-                url={getCalendlyUrl()}
-                styles={{
-                  height: "100%",
-                  width: "100%"
-                }}
-                prefill={{
-                  name: "Your Name",
-                  email: "your@email.com",
-                  customAnswers: {
-                    a1: selectedPlan ? selectedPlan.name : "",
-                    a2: selectedSession ? selectedSession.name : ""
-                  }
-                }}
-              />
-            </Box>
+          <ModalBody pb={6}>
+            {mentor?.calendlyUrl ? (
+              <InlineWidget url={getCalendlyUrl()} />
+            ) : (
+              <Alert status="warning">
+                <AlertIcon />
+                Scheduling is not available for this mentor
+              </Alert>
+            )}
           </ModalBody>
         </ModalContent>
       </Modal>

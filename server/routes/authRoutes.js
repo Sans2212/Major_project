@@ -1,6 +1,22 @@
 import express from 'express';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+import { env } from 'process';
+
+// Configure environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Get environment variables or use fallbacks
+const config = {
+  jwtSecret: env.JWT_SECRET || 'your-secret-key',
+  nodeEnv: env.NODE_ENV || 'development'
+};
 
 const router = express.Router();
 
@@ -40,7 +56,7 @@ router.post("/login", async (req, res) => {
     console.log("Stored password hash:", user.password);
     console.log("Attempting password validation...");
     
-    const isPasswordValid = await user.isValidPassword(password);
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
     console.log("Password validation result:", isPasswordValid);
 
     if (!isPasswordValid) {
@@ -50,7 +66,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      config.jwtSecret,
       { expiresIn: "1h" }
     );
 
@@ -58,7 +74,7 @@ router.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: config.nodeEnv === "production",
       sameSite: "Strict",
     });
 
@@ -101,11 +117,14 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
+    // Hash password before creating user
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     const newUser = new model({
       fullName,
       email,
-      password: password,
+      password: hashedPassword,
       role,
     });
 
@@ -113,13 +132,13 @@ router.post("/signup", async (req, res) => {
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET,
+      config.jwtSecret,
       { expiresIn: "1h" }
     );
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: config.nodeEnv === "production",
       sameSite: "Strict",
     });
 
@@ -136,7 +155,7 @@ router.get("/session", (req, res) => {
     return res.status(401).json({ error: "No token provided" });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, config.jwtSecret, (err, decoded) => {
     if (err) {
       return res.status(401).json({ error: "Invalid token" });
     }
