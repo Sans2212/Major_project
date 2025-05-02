@@ -11,12 +11,14 @@ import {
   useColorModeValue,
   Avatar,
   Icon,
+  Spacer,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import logo from "../assets/main_logo.png";
 import { mentors } from "../data/mentors";
 import { useState } from "react";
+import ProfileDropdown from '../components/comp/ProfileDropdown';
 
 const MenteeHome = () => {
   const navigate = useNavigate();
@@ -33,6 +35,10 @@ const MenteeHome = () => {
 
   return (
     <Box minH="100vh" bg="gray.50">
+      <Flex p={4} align="center">
+        <Spacer />
+        <ProfileDropdown />
+      </Flex>
       {/* Header */}
       <Flex
         bgGradient="linear(to-r, teal.600, green.600)"
