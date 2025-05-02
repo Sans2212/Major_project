@@ -41,6 +41,13 @@ function App() {
 
   // Redirect authenticated users from login/signup pages to their respective dashboards
   if (user && (location.pathname === "/login" || location.pathname.startsWith("/signup"))) {
+    // Allow mentor signup for non-mentor users
+    if (location.pathname.startsWith("/signup/mentor")) {
+      if (user.role === "mentor") {
+        return <Navigate to="/my-profile" />;
+      }
+      return null; // Don't redirect, allow access
+    }
     return <Navigate to={user.role === "mentee" ? "/home/mentee" : "/my-profile"} />;
   }
 
@@ -112,19 +119,9 @@ function App() {
           } 
         />
 
-        {/* Semi-protected routes (accessible by authenticated users with specific conditions) */}
-        <Route 
-          path="/signup/mentor/form" 
-          element={
-            user ? <MentorApplicationform /> : <Navigate to="/signup/mentor" />
-          } 
-        />
-        <Route 
-          path="/mentor/done" 
-          element={
-            user ? <MentorApplicationdone /> : <Navigate to="/signup/mentor" />
-          } 
-        />
+        {/* Mentor application routes */}
+        <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
+        <Route path="/mentor/done" element={<MentorApplicationdone />} />
 
         {/* Browse routes with optional authentication */}
         <Route path="/mentors/static/:mentorId" element={<MentorProfile />} />
