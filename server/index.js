@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
 import { env } from 'process';
+import fs from 'fs';
 
 import { menteeConnection, mentorConnection } from './config/db.js';
 import Mentor from './models/MentorModel.js';
@@ -31,6 +32,20 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const menteesDir = path.join(uploadsDir, 'mentees');
+const mentorsDir = path.join(uploadsDir, 'mentors');
+
+[uploadsDir, menteesDir, mentorsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Add endpoint to get server port
 app.get('/api/server-info', (req, res) => {

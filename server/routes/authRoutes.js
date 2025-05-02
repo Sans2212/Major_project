@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
 import { env } from 'process';
+import UserModel from '../models/User.js';
+import Mentor from '../models/MentorModel.js';
 
 // Configure environment variables
 const __filename = fileURLToPath(import.meta.url);
@@ -37,7 +39,7 @@ router.post("/login", async (req, res) => {
   console.log("Normalized credentials:", { email, role });
 
   try {
-    const model = role === "mentor" ? req.models.MentorModel : req.models.UserModel;
+    const model = role === "mentor" ? Mentor : UserModel;
     console.log("Using model:", model ? model.modelName : "none");
     
     if (!model) {
@@ -107,7 +109,7 @@ router.post("/signup", async (req, res) => {
   }
 
   try {
-    const model = role === "mentor" ? req.models.MentorModel : req.models.UserModel;
+    const model = role === "mentor" ? Mentor : UserModel;
     if (!model) {
       return res.status(400).json({ error: "Invalid role provided" });
     }
@@ -149,18 +151,33 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-router.get("/session", (req, res) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
-  jwt.verify(token, config.jwtSecret, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: "Invalid token" });
+router.get("/session", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
     }
-    res.status(200).json({ userId: decoded.id, role: decoded.role });
-  });
+
+    const decoded = jwt.verify(token, config.jwtSecret);
+    const model = decoded.role === "mentor" ? Mentor : UserModel;
+    
+    const user = await model.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      id: user._id,
+      email: user.email,
+      role: decoded.role,
+      firstName: user.firstName || user.fullName,
+      lastName: user.lastName,
+      profilePhoto: user.profilePhoto
+    });
+  } catch (error) {
+    console.error('Session verification error:', error);
+    return res.status(401).json({ error: "Invalid token" });
+  }
 });
 
 // Default export
