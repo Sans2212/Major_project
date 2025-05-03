@@ -1,13 +1,19 @@
 import { useState } from "react";
 import {
   Box,
+  Container,
   Flex,
   Image,
-  Input,
   Button,
-  Heading,
-  Container,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Text,
+  Link,
+  Divider,
   IconButton,
+  useDisclosure,
   Drawer,
   DrawerBody,
   DrawerHeader,
@@ -15,22 +21,24 @@ import {
   DrawerContent,
   DrawerCloseButton,
   VStack,
-  useDisclosure,
+  HStack,
   useBreakpointValue,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
+  Input,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react";
-import { SearchIcon, HamburgerIcon, ChevronDownIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { HamburgerIcon, ChevronDownIcon, SearchIcon } from "@chakra-ui/icons";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import Logo from "../../assets/main_logo.png";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
+import ProfileDropdown from "./ProfileDropdown";
 
 const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -65,79 +73,59 @@ const Header = () => {
 
   // Mentor categories for the secondary navigation
   const mentorCategories = [
-    { name: "Engineering Mentors", path: "/browse/search?q=engineering" },
-    { name: "Design Mentors", path: "/browse/search?q=design" },
-    { name: "Startup Mentors", path: "/browse/search?q=startup" },
-    { name: "Product Management", path: "/browse/search?q=product" },
-    { name: "Marketing", path: "/browse/search?q=marketing" },
-    { name: "Leadership", path: "/browse/search?q=leadership" },
-    { name: "Career", path: "/browse/search?q=career" },
-    { name: "Data Science", path: "/browse/search?q=data" }
+    { name: "Technology", path: "/browse/technology" },
+    { name: "Business", path: "/browse/business" },
+    { name: "Design", path: "/browse/design" },
+    { name: "Marketing", path: "/browse/marketing" },
+    { name: "Finance", path: "/browse/finance" },
   ];
 
   const handleNavigation = (path) => {
     navigate(path);
-    if (isMobile) onClose();
+    if (isOpen) onClose();
   };
 
-  return (
-    <Box as="header" bg="white" borderBottom="1px" borderColor="gray.200" position="sticky" top={0} zIndex={1000}>
-      {/* Main Navigation */}
-      <Container maxW="1200px" px={4}>
-        <Flex h="72px" align="center" justify="space-between" gap={{ base: 4, lg: 8 }}>
-          {/* Logo + Brand Name */}
-          <Flex 
-            align="center" 
-            cursor="pointer" 
-            onClick={() => navigate("/")} 
-            flex={{ base: "1", md: "0 0 auto" }}
-            mr={{ base: 2, md: 4, lg: 8 }}
-          >
-            <Image
-              src={Logo}
-              alt="Mentor Connect Logo"
-              h={{ base: "32px", md: "36px" }}
-              mr={3}
-            />
-            <Heading as="h1" fontSize={{ base: "20px", md: "24px" }} color="teal.700" display={{ base: "none", sm: "block" }}>
-              Mentor Connect
-            </Heading>
-          </Flex>
+  // Only show search functionality for mentees or non-authenticated users
+  const showSearch = !user || user.role === 'mentee';
 
-          {/* Search Bar - Hidden on mobile */}
-          <Box 
-            flex="1" 
-            maxW={{ md: "400px", lg: "580px" }} 
-            mx={{ md: 6, lg: 12 }} 
-            display={{ base: "none", md: "block" }}
-          >
-            <Flex>
-              <Input
-                h="40px"
-                placeholder="Search mentors by name, role, or expertise..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleKeyDown}
-                bg="gray.50"
-                border="1px"
-                borderColor="gray.200"
-                borderRadius="md"
-                _placeholder={{ color: "gray.500" }}
-                _focus={{
-                  borderColor: "teal.500",
-                  boxShadow: "0 0 0 1px teal.500",
-                }}
-              />
-              <Button
-                h="40px"
-                ml={3}
-                onClick={handleSearch}
-                colorScheme="teal"
+  return (
+    <Box as="header" bg="white" boxShadow="sm" position="sticky" top={0} zIndex={10}>
+      <Container maxW="container.xl">
+        <Flex justify="space-between" align="center" h="4rem">
+          <Link as={RouterLink} to="/" _hover={{ textDecoration: "none" }}>
+            <HStack spacing={4}>
+              <Image src={Logo} alt="Logo" h="2.5rem" />
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                display={{ base: "none", md: "block" }}
               >
-                <SearchIcon />
-              </Button>
-            </Flex>
-          </Box>
+                Mentor Connect
+              </Text>
+            </HStack>
+          </Link>
+
+          {/* Search Bar - Only show on desktop and for appropriate users */}
+          {!isMobile && showSearch && (
+            <Box flex="1" mx={8} maxW="500px">
+              <InputGroup>
+                <Input
+                  placeholder="Search mentors..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <InputRightElement>
+                  <IconButton
+                    icon={<SearchIcon />}
+                    variant="ghost"
+                    onClick={handleSearch}
+                    aria-label="Search"
+                  />
+                </InputRightElement>
+              </InputGroup>
+            </Box>
+          )}
 
           {/* Desktop Navigation */}
           <Flex 
@@ -145,36 +133,67 @@ const Header = () => {
             gap={6} 
             display={{ base: "none", md: "flex" }}
             ml={{ md: 4, lg: 8 }}
+            minW="fit-content"
           >
-            <Menu>
-              <MenuButton
-                as={Button}
-                rightIcon={<ChevronDownIcon />}
+            {/* Show Browse Mentors menu for non-authenticated users and Dashboard for authenticated users */}
+            {user ? (
+              <Button
+                as={RouterLink}
+                to={user.role === 'mentee' ? '/home/mentee' : '/home/mentor'}
                 colorScheme="teal"
                 size="md"
                 px={6}
+                borderRadius="0"
+                _hover={{ borderRadius: '0' }}
+                _active={{ borderRadius: '0' }}
               >
-                Browse Mentors
-              </MenuButton>
-              <MenuList maxH="400px" overflowY="auto">
-                {mentorCategories.map((category) => (
-                  <MenuItem
-                    key={category.name}
-                    onClick={() => handleNavigation(category.path)}
-                  >
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </Menu>
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={() => handleNavigation("/login")}
-              px={6}
-            >
-              Login
-            </Button>
+                Dashboard
+              </Button>
+            ) : (
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  rightIcon={<ChevronDownIcon />}
+                  colorScheme="teal"
+                  size="md"
+                  px={6}
+                  borderRadius="0"
+                  _hover={{ borderRadius: '0' }}
+                  _active={{ borderRadius: '0' }}
+                  _expanded={{ borderRadius: '0' }}
+                >
+                  Browse Mentors
+                </MenuButton>
+                <MenuList maxH="400px" overflowY="auto" borderRadius="0">
+                  {mentorCategories.map((category) => (
+                    <MenuItem
+                      key={category.name}
+                      onClick={() => handleNavigation(category.path)}
+                    >
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Menu>
+            )}
+            
+            <Box minW="fit-content">
+              {user ? (
+                <ProfileDropdown />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={() => handleNavigation("/login")}
+                  px={6}
+                  borderRadius="0"
+                  _hover={{ borderRadius: '0' }}
+                  _active={{ borderRadius: '0' }}
+                >
+                  Login
+                </Button>
+              )}
+            </Box>
           </Flex>
 
           {/* Mobile Menu Button */}
@@ -193,34 +212,106 @@ const Header = () => {
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
-          <DrawerHeader borderBottomWidth="1px">Menu</DrawerHeader>
+          <DrawerHeader>Menu</DrawerHeader>
           <DrawerBody>
-            <VStack spacing={4} align="stretch" pt={4}>
-              <Button
-                colorScheme="teal"
-                size="md"
-                onClick={() => handleNavigation("/browse")}
-              >
-                Browse Mentors
-              </Button>
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={() => handleNavigation("/login")}
-              >
-                Login
-              </Button>
-              <Box pt={4} pb={2} fontWeight="medium">Categories</Box>
-              {mentorCategories.map((category) => (
+            <VStack spacing={4} align="stretch">
+              {/* Search Bar for Mobile - Only show for appropriate users */}
+              {showSearch && (
+                <InputGroup>
+                  <Input
+                    placeholder="Search mentors..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                  <InputRightElement>
+                    <IconButton
+                      icon={<SearchIcon />}
+                      variant="ghost"
+                      onClick={handleSearch}
+                      aria-label="Search"
+                    />
+                  </InputRightElement>
+                </InputGroup>
+              )}
+
+              {/* Show Browse Categories only for mentees or non-authenticated users */}
+              {showSearch && (
+                <>
+                  <Text fontWeight="bold" mb={2}>
+                    Browse by Category
+                  </Text>
+                  {mentorCategories.map((category) => (
+                    <Button
+                      key={category.name}
+                      variant="ghost"
+                      justifyContent="flex-start"
+                      onClick={() => {
+                        handleNavigation(category.path);
+                        onClose();
+                      }}
+                    >
+                      {category.name}
+                    </Button>
+                  ))}
+                  <Divider my={4} />
+                </>
+              )}
+
+              {user ? (
+                <>
+                  {user.role === 'mentee' && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        handleNavigation("/home/mentee");
+                        onClose();
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                  )}
+                  {user.role === 'mentor' && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        handleNavigation("/my-profile");
+                        onClose();
+                      }}
+                    >
+                      My Profile
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      handleNavigation("/settings");
+                      onClose();
+                    }}
+                  >
+                    Settings
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      logout();
+                      onClose();
+                    }}
+                  >
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
                 <Button
-                  key={category.name}
                   variant="ghost"
-                  justifyContent="left"
-                  onClick={() => handleNavigation(category.path)}
+                  onClick={() => {
+                    handleNavigation("/login");
+                    onClose();
+                  }}
                 >
-                  {category.name}
+                  Login
                 </Button>
-              ))}
+              )}
             </VStack>
           </DrawerBody>
         </DrawerContent>

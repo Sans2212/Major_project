@@ -12,6 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { FaLinkedin, FaTwitter, FaInstagram, FaGithub } from "react-icons/fa";
 import PropTypes from "prop-types";
+import { useAuth } from "../../context/AuthContext";
+import { Link as RouterLink } from "react-router-dom";
 
 const ListHeader = ({ children, color }) => {
   return (
@@ -31,6 +33,7 @@ const Footer = () => {
   const textColor = useColorModeValue("gray.600", "gray.400");
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const hoverColor = useColorModeValue("teal.500", "teal.300");
+  const { user } = useAuth();
 
   return (
     <Box bg={bgColor} color={textColor}>
@@ -38,41 +41,76 @@ const Footer = () => {
         <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={8}>
           <Stack align="flex-start">
             <ListHeader color={headingColor}>Company</ListHeader>
-            <Link href="/about">About Us</Link>
-            <Link href="/help">Help Center</Link>
-            <Link href="/privacy">Privacy Policy</Link>
-            <Link href="/terms">Terms of Service</Link>
+            <Link as={RouterLink} to="/about">About Us</Link>
+            <Link as={RouterLink} to="/help">Help Center</Link>
+            <Link as={RouterLink} to="/privacy">Privacy Policy</Link>
+            <Link as={RouterLink} to="/terms">Terms of Service</Link>
           </Stack>
 
           <Stack align="flex-start">
             <ListHeader color={headingColor}>Support</ListHeader>
-            <Link href="/contact">Contact Us</Link>
-            <Link href="/feedback">Feedback</Link>
-            <Link href="/report">Report an Issue</Link>
+            <Link as={RouterLink} to="/contact">Contact Us</Link>
+            {user && (
+              <Link as={RouterLink} to="/feedback">Feedback</Link>
+            )}
+            <Link as={RouterLink} to="/report">Report an Issue</Link>
           </Stack>
 
-          <Stack align="flex-start">
-            <ListHeader color={headingColor}>For Mentors</ListHeader>
-            <Link href="/signup/mentor/form" color={textColor}>
-              Become a Mentor
-            </Link>
-            <Link href="/mentor-guidelines" color={textColor}>
-              Mentor Guidelines
-            </Link>
-            <Link href="#" color={textColor}>
-              Mentor Resources
-            </Link>
-            <Link href="#" color={textColor}>
-              Mentor Community
-            </Link>
-          </Stack>
+          {/* Show mentor links only if user is not a mentee */}
+          {(!user || user.role !== 'mentee') && (
+            <Stack align="flex-start">
+              <ListHeader color={headingColor}>For Mentors</ListHeader>
+              {!user && (
+                <Link as={RouterLink} to="/signup/mentor">
+                  Become a Mentor
+                </Link>
+              )}
+              <Link as={RouterLink} to="/mentor-guidelines">
+                Mentor Guidelines
+              </Link>
+              {user?.role === 'mentor' && (
+                <>
+                  <Link as={RouterLink} to="/my-profile">
+                    My Profile
+                  </Link>
+                  <Link as={RouterLink} to="/mentor/resources">
+                    Mentor Resources
+                  </Link>
+                  <Link as={RouterLink} to="/mentor/community">
+                    Mentor Community
+                  </Link>
+                </>
+              )}
+            </Stack>
+          )}
 
-          <Stack align="flex-start">
-            <ListHeader color={headingColor}>For Mentees</ListHeader>
-            <Link href="/signup/mentee">Sign Up</Link>
-            <Link href="/mentee/guidelines">Mentee Guidelines</Link>
-            <Link href="/mentee/resources">Resources</Link>
-          </Stack>
+          {/* Show mentee links only if user is not a mentor */}
+          {(!user || user.role !== 'mentor') && (
+            <Stack align="flex-start">
+              <ListHeader color={headingColor}>For Mentees</ListHeader>
+              {!user && (
+                <Link as={RouterLink} to="/signup/mentee">
+                  Sign Up as Mentee
+                </Link>
+              )}
+              <Link as={RouterLink} to="/mentee/guidelines">
+                Mentee Guidelines
+              </Link>
+              {user?.role === 'mentee' && (
+                <>
+                  <Link as={RouterLink} to="/home/mentee">
+                    My Dashboard
+                  </Link>
+                  <Link as={RouterLink} to="/browse">
+                    Find Mentors
+                  </Link>
+                  <Link as={RouterLink} to="/mentee/resources">
+                    Learning Resources
+                  </Link>
+                </>
+              )}
+            </Stack>
+          )}
         </SimpleGrid>
       </Container>
 

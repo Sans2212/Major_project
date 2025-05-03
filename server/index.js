@@ -1,11 +1,13 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+import { env } from 'process';
+import fs from 'fs';
 
 import { menteeConnection, mentorConnection } from './config/db.js';
-import UserSchema from './schemas/UserSchema.js';
 import Mentor from './models/MentorModel.js';
 import UserModel from './models/User.js';
 
@@ -13,10 +15,13 @@ import authRoutes from './routes/authRoutes.js';
 import mentorRoutes from './routes/mentorRoutes.js';
 import menteeRoutes from './routes/menteeRoutes.js';
 
-dotenv.config();
+// Configure environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT || 3001;
 
 // Middleware
 app.use(cors({
@@ -27,6 +32,20 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const menteesDir = path.join(uploadsDir, 'mentees');
+const mentorsDir = path.join(uploadsDir, 'mentors');
+
+[uploadsDir, menteesDir, mentorsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Add endpoint to get server port
 app.get('/api/server-info', (req, res) => {

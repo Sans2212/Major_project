@@ -5,6 +5,22 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { env } from 'process';
+
+// Configure environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Get environment variables from process.env or use fallbacks
+const config = {
+  jwtSecret: env.JWT_SECRET || 'your-secret-key',
+  emailUser: env.EMAIL_USER || '',
+  emailPass: env.EMAIL_PASS || ''
+};
 
 const router = express.Router();
 const otpStore = {};
@@ -49,13 +65,13 @@ router.post("/forgot-password/send-otp", async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: config.emailUser,
+      pass: config.emailPass,
     },
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: config.emailUser,
     to: email,
     subject: "Mentor Connect - OTP for Password Reset",
     text: `Hello ${mentor.firstName},\n\nYour OTP is: ${otp}\n\nValid for 10 minutes.`,
@@ -163,7 +179,7 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
     // Create and send JWT token
     const token = jwt.sign(
       { id: mentor._id, role: 'mentor' },
-      process.env.JWT_SECRET || 'your-secret-key',
+      config.jwtSecret,
       { expiresIn: "1h" }
     );
 
@@ -303,6 +319,99 @@ router.get("/search", async (req, res) => {
   } catch (error) {
     console.error("Error searching mentors:", error);
     res.status(500).json({ error: "Error searching mentors" });
+  }
+});
+
+// Middleware to verify mentee token
+const verifyMenteeToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret);
+    if (decoded.role !== 'mentee') {
+      return res.status(403).json({ error: 'Only mentees can rate mentors' });
+    }
+    req.userId = decoded.id;
+    next();
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Rate a mentor
+router.post("/:mentorId/rate", verifyMenteeToken, async (req, res) => {
+  try {
+    console.log('Rating request received:', {
+      mentorId: req.params.mentorId,
+      userId: req.userId,
+      rating: req.body.rating,
+      hasReview: !!req.body.review
+    });
+
+    const MentorModel = req.app.locals.MentorModel;
+    const { mentorId } = req.params;
+    const { rating, review } = req.body;
+
+    // Validate rating
+    if (!rating || rating < 1 || rating > 5) {
+      console.log('Invalid rating value:', rating);
+      return res.status(400).json({ error: "Rating must be between 1 and 5" });
+    }
+
+    const mentor = await MentorModel.findById(mentorId);
+    if (!mentor) {
+      console.log('Mentor not found:', mentorId);
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    console.log('Current mentor stats:', {
+      currentRating: mentor.rating,
+      currentReviews: mentor.reviews
+    });
+
+    // Calculate new average rating
+    const currentRating = mentor.rating || 0;
+    const currentReviews = mentor.reviews || 0;
+    const newTotalRating = (currentRating * currentReviews) + rating;
+    const newReviews = currentReviews + 1;
+    const newAverageRating = newTotalRating / newReviews;
+
+    console.log('New rating calculation:', {
+      newTotalRating,
+      newReviews,
+      newAverageRating
+    });
+
+    // Add testimonial if review is provided
+    if (review) {
+      mentor.testimonials = mentor.testimonials || [];
+      mentor.testimonials.push({
+        rating,
+        content: review,
+        date: new Date().toISOString()
+      });
+      console.log('Added new testimonial');
+    }
+
+    // Update mentor's rating and review count
+    mentor.rating = newAverageRating;
+    mentor.reviews = newReviews;
+
+    await mentor.save();
+    console.log('Successfully saved mentor with new rating');
+
+    res.json({
+      message: "Rating submitted successfully",
+      newRating: newAverageRating,
+      totalReviews: newReviews
+    });
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    res.status(500).json({ error: "Failed to submit rating. " + error.message });
   }
 });
 

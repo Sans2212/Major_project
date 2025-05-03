@@ -1,6 +1,24 @@
 import express from 'express';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+import { env } from 'process';
+import UserModel from '../models/User.js';
+import Mentor from '../models/MentorModel.js';
+
+// Configure environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Get environment variables or use fallbacks
+const config = {
+  jwtSecret: env.JWT_SECRET || 'your-secret-key',
+  nodeEnv: env.NODE_ENV || 'development'
+};
 
 const router = express.Router();
 
@@ -21,7 +39,7 @@ router.post("/login", async (req, res) => {
   console.log("Normalized credentials:", { email, role });
 
   try {
-    const model = role === "mentor" ? req.models.MentorModel : req.models.UserModel;
+    const model = role === "mentor" ? Mentor : UserModel;
     console.log("Using model:", model ? model.modelName : "none");
     
     if (!model) {
@@ -40,7 +58,7 @@ router.post("/login", async (req, res) => {
     console.log("Stored password hash:", user.password);
     console.log("Attempting password validation...");
     
-    const isPasswordValid = await user.isValidPassword(password);
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
     console.log("Password validation result:", isPasswordValid);
 
     if (!isPasswordValid) {
@@ -50,7 +68,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      config.jwtSecret,
       { expiresIn: "1h" }
     );
 
@@ -58,7 +76,7 @@ router.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: config.nodeEnv === "production",
       sameSite: "Strict",
     });
 
@@ -91,7 +109,7 @@ router.post("/signup", async (req, res) => {
   }
 
   try {
-    const model = role === "mentor" ? req.models.MentorModel : req.models.UserModel;
+    const model = role === "mentor" ? Mentor : UserModel;
     if (!model) {
       return res.status(400).json({ error: "Invalid role provided" });
     }
@@ -101,11 +119,14 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
+    // Hash password before creating user
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(password, salt);
 
     const newUser = new model({
       fullName,
       email,
-      password: password,
+      password: hashedPassword,
       role,
     });
 
@@ -113,13 +134,13 @@ router.post("/signup", async (req, res) => {
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET,
+      config.jwtSecret,
       { expiresIn: "1h" }
     );
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: config.nodeEnv === "production",
       sameSite: "Strict",
     });
 
@@ -130,18 +151,33 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-router.get("/session", (req, res) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: "Invalid token" });
+router.get("/session", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
     }
-    res.status(200).json({ userId: decoded.id, role: decoded.role });
-  });
+
+    const decoded = jwt.verify(token, config.jwtSecret);
+    const model = decoded.role === "mentor" ? Mentor : UserModel;
+    
+    const user = await model.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      id: user._id,
+      email: user.email,
+      role: decoded.role,
+      firstName: user.firstName || user.fullName,
+      lastName: user.lastName,
+      profilePhoto: user.profilePhoto
+    });
+  } catch (error) {
+    console.error('Session verification error:', error);
+    return res.status(401).json({ error: "Invalid token" });
+  }
 });
 
 // Default export

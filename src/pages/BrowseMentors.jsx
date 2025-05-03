@@ -1,75 +1,126 @@
 // src/pages/BrowseMentors.jsx (or FindMentors.jsx)
 
 // import React from "react";
-import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Flex } from "@chakra-ui/react";
+import { Box, SimpleGrid, Text, Avatar, Badge, Icon, Flex, Spinner, Center } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { FaStar } from "react-icons/fa";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { mentors } from "../data/mentors";
+import { mentors as staticMentors } from "../data/mentors";
+import axios from "axios";
 
 const BrowseMentors = () => {
   const [searchParams] = useSearchParams();
   const [filteredMentors, setFilteredMentors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const category = searchParams.get("category");
   const searchTerm = searchParams.get("q");
 
   useEffect(() => {
-    // Filter mentors based on search query or category
-    let filtered = [...mentors];
-    
-    if (searchTerm) {
-      const query = searchTerm.toLowerCase();
-      // Split the search term into individual words
-      const searchWords = query.split(/[\s-]+/);
-      
-      filtered = mentors.filter(mentor => {
-        // Check if any of the search words match exactly with expertise
-        const hasMatchingExpertise = mentor.expertise.some(skill => 
-          searchWords.some(word => 
-            skill.toLowerCase().includes(word)
-          )
-        );
-        
-        // Check if the search term matches the role
-        const hasMatchingRole = mentor.role.toLowerCase().includes(query);
-        
-        return hasMatchingExpertise || hasMatchingRole;
-      });
-    }
-    
-    if (category) {
-      const categoryLower = category.toLowerCase();
-      // Map category names to expertise keywords
-      const categoryKeywords = {
-        'engineering': ['javascript', 'react', 'node.js', 'java', 'microservices', 'cloud computing', 'system design', 'cloud architecture'],
-        'design': ['ui', 'ux', 'design', 'user experience', 'user interface', 'figma', 'prototyping', 'design systems'],
-        'startup': ['startup', 'founder', 'entrepreneur', 'business strategy', 'fundraising', 'growth hacking'],
-        'product-management': ['product', 'product strategy', 'product management', 'agile', 'user research'],
-        'marketing': ['marketing', 'digital marketing', 'brand strategy', 'social media'],
-        'leadership': ['leadership', 'executive', 'management', 'team leadership', 'strategic planning'],
-        'career': ['career', 'career development', 'resume', 'interview preparation'],
-        'data-science': ['data', 'analytics', 'machine learning', 'ai', 'python', 'big data']
-      };
+    const fetchMentors = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch mentors from database
+        let dbMentors = [];
+        if (searchTerm) {
+          const response = await axios.get(`http://localhost:3001/api/mentors/search?q=${encodeURIComponent(searchTerm.trim())}`);
+          dbMentors = response.data.map(mentor => ({
+            id: mentor._id,
+            name: `${mentor.firstName} ${mentor.lastName}`,
+            role: mentor.jobTitle || "Mentor",
+            rating: mentor.rating || 4.5,
+            reviews: mentor.reviews || 0,
+            expertise: mentor.skills ? mentor.skills.split(',').map(skill => skill.trim()) : [],
+            image: mentor.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentor.profilePhoto}` : null,
+            isFromDB: true
+          }));
+        } else {
+          const response = await axios.get('http://localhost:3001/api/mentors/browse');
+          dbMentors = response.data.map(mentor => ({
+            id: mentor._id,
+            name: `${mentor.firstName} ${mentor.lastName}`,
+            role: mentor.jobTitle || "Mentor",
+            rating: mentor.rating || 4.5,
+            reviews: mentor.reviews || 0,
+            expertise: mentor.skills ? mentor.skills.split(',').map(skill => skill.trim()) : [],
+            image: mentor.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentor.profilePhoto}` : null,
+            isFromDB: true
+          }));
+        }
 
-      const keywords = categoryKeywords[categoryLower] || [categoryLower];
-      
-      filtered = mentors.filter(mentor => {
-        // Check if any of the mentor's expertise matches any of the category keywords
-        return mentor.expertise.some(skill => 
-          keywords.some(keyword => 
-            skill.toLowerCase().includes(keyword)
-          )
-        );
-      });
-    }
-    
-    setFilteredMentors(filtered);
+        // Combine with static mentors
+        let allMentors = [...dbMentors, ...staticMentors];
+        
+        // Filter based on search term or category
+        if (searchTerm) {
+          const query = searchTerm.toLowerCase();
+          const searchWords = query.split(/[\s-]+/);
+          
+          allMentors = allMentors.filter(mentor => {
+            const hasMatchingExpertise = mentor.expertise.some(skill => 
+              searchWords.some(word => 
+                skill.toLowerCase().includes(word)
+              )
+            );
+            const hasMatchingRole = mentor.role.toLowerCase().includes(query);
+            const hasMatchingName = mentor.name.toLowerCase().includes(query);
+            
+            return hasMatchingExpertise || hasMatchingRole || hasMatchingName;
+          });
+        }
+        
+        if (category) {
+          const categoryLower = category.toLowerCase();
+          const categoryKeywords = {
+            'engineering': ['javascript', 'react', 'node.js', 'java', 'microservices', 'cloud computing', 'system design', 'cloud architecture'],
+            'design': ['ui', 'ux', 'design', 'user experience', 'user interface', 'figma', 'prototyping', 'design systems'],
+            'startup': ['startup', 'founder', 'entrepreneur', 'business strategy', 'fundraising', 'growth hacking'],
+            'product-management': ['product', 'product strategy', 'product management', 'agile', 'user research'],
+            'marketing': ['marketing', 'digital marketing', 'brand strategy', 'social media'],
+            'leadership': ['leadership', 'executive', 'management', 'team leadership', 'strategic planning'],
+            'career': ['career', 'career development', 'resume', 'interview preparation'],
+            'data-science': ['data', 'analytics', 'machine learning', 'ai', 'python', 'big data']
+          };
+
+          const keywords = categoryKeywords[categoryLower] || [categoryLower];
+          
+          allMentors = allMentors.filter(mentor => {
+            return mentor.expertise.some(skill => 
+              keywords.some(keyword => 
+                skill.toLowerCase().includes(keyword)
+              )
+            );
+          });
+        }
+        
+        setFilteredMentors(allMentors);
+      } catch (error) {
+        console.error("Error fetching mentors:", error);
+        // If database fetch fails, fall back to static mentors
+        setFilteredMentors(staticMentors);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMentors();
   }, [searchTerm, category]);
 
-  const handleMentorClick = (mentorId) => {
-    navigate(`/mentors/${mentorId}`);
+  const handleMentorClick = (mentor) => {
+    if (mentor.isFromDB) {
+      navigate(`/mentors/${mentor.id}`);
+    } else {
+      navigate(`/mentors/static/${mentor.id}`);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <Center minH="60vh">
+        <Spinner size="xl" color="teal.500" thickness="4px" />
+      </Center>
+    );
+  }
 
   return (
     <Box p={8}>
@@ -98,7 +149,7 @@ const BrowseMentors = () => {
             borderColor="gray.200"
             transition="all 0.3s ease-in-out"
             cursor="pointer"
-            onClick={() => handleMentorClick(mentor.id)}
+            onClick={() => handleMentorClick(mentor)}
             _hover={{ 
               transform: "scale(1.02)",
               boxShadow: "xl"

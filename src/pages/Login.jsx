@@ -19,8 +19,10 @@ import {
   Link,
 } from "@chakra-ui/react";
 import logo from "../assets/main_logo.png";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
+  const { login } = useAuth();
   const [role, setRole] = useState("mentee");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -34,7 +36,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Login attempt with:", { email, role, passwordLength: loginPassword.length });
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost:3001/api/auth/login", {
@@ -53,13 +55,17 @@ const Login = () => {
       const data = await response.json();
       
       if (response.ok) {
-        const { token } = data;
-        localStorage.setItem('authToken', token);
+        // Use the login function from auth context
+        login({
+          ...data,
+          role: role.trim() // Ensure role is included in the login data
+        });
 
+        // Redirect based on role
         if (role === "mentee") {
-          navigate("/home/mentee");
+          navigate("/", { replace: true });
         } else {
-          navigate("/my-profile");
+          navigate("/my-profile", { replace: true });
         }
       } else {
         console.error("Login failed:", data.error);
@@ -68,6 +74,8 @@ const Login = () => {
     } catch (error) {
       console.error("Error during login:", error);
       alert("Error logging in. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
