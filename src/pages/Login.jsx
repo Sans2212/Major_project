@@ -63,7 +63,7 @@ const Login = () => {
 
         // Redirect based on role
         if (role === "mentee") {
-          navigate("/home/mentee", { replace: true });
+          navigate("/", { replace: true });
         } else {
           navigate("/my-profile", { replace: true });
         }

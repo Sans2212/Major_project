@@ -48,7 +48,7 @@ function App() {
       }
       return null; // Don't redirect, allow access
     }
-    return <Navigate to={user.role === "mentee" ? "/home/mentee" : "/my-profile"} />;
+    return <Navigate to={user.role === "mentee" ? "/" : "/my-profile"} />;
   }
 
   return (

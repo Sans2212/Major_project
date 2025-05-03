@@ -135,8 +135,21 @@ const Header = () => {
             ml={{ md: 4, lg: 8 }}
             minW="fit-content"
           >
-            {/* Show Browse Mentors menu only for mentees or non-authenticated users */}
-            {showSearch && (
+            {/* Show Browse Mentors menu for non-authenticated users and Dashboard for authenticated users */}
+            {user ? (
+              <Button
+                as={RouterLink}
+                to={user.role === 'mentee' ? '/home/mentee' : '/home/mentor'}
+                colorScheme="teal"
+                size="md"
+                px={6}
+                borderRadius="0"
+                _hover={{ borderRadius: '0' }}
+                _active={{ borderRadius: '0' }}
+              >
+                Dashboard
+              </Button>
+            ) : (
               <Menu>
                 <MenuButton
                   as={Button}
