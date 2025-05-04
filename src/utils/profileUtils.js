@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const fetchMenteeProfile = async (token) => {
-  const response = await axios.get("http://localhost:3001/api/mentees/profile", {
+  const response = await axios.get("http://localhost:30011/api/mentees/profile", {
     headers: { Authorization: `Bearer ${token}` }
   });
   return response.data;
@@ -9,7 +9,7 @@ export const fetchMenteeProfile = async (token) => {
 
 export const updateMenteeProfile = async (token, formData) => {
   await axios.put(
-    "http://localhost:3001/api/mentees/profile",
+    "http://localhost:30011/api/mentees/profile",
     formData,
     {
       headers: {

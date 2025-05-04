@@ -201,6 +201,40 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
 
 // ---------------------- Profile Routes ----------------------
 
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret);
+    req.userId = decoded.id;
+    next();
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return res.status(401).json({ error: `Invalid token: ${error.message}` });
+  }
+};
+
+// Get current mentor's profile
+router.get("/profile", verifyToken, async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findById(req.userId).select('-password');
+    
+    if (!mentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json(mentor);
+  } catch (error) {
+    console.error("Error fetching mentor profile:", error);
+    res.status(500).json({ error: "Error fetching mentor profile" });
+  }
+});
+
+// Get mentor profile by ID
 router.get("/profile/:mentorId", async (req, res) => {
   try {
     const MentorModel = req.app.locals.MentorModel;
@@ -412,6 +446,24 @@ router.post("/:mentorId/rate", verifyMenteeToken, async (req, res) => {
   } catch (error) {
     console.error("Error submitting rating:", error);
     res.status(500).json({ error: "Failed to submit rating. " + error.message });
+  }
+});
+
+// Delete mentor account
+router.delete("/delete-account", verifyToken, async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentorId = req.userId;
+
+    const deletedMentor = await MentorModel.findByIdAndDelete(mentorId);
+    if (!deletedMentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ error: "Failed to delete account" });
   }
 });
 
