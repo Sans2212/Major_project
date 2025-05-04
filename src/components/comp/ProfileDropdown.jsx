@@ -55,9 +55,20 @@ const ProfileDropdown = () => {
     
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({
+          title: 'Error',
+          description: 'Authentication token not found. Please log in again.',
+          status: 'error',
+          duration: 3000,
+        });
+        logout();
+        return;
+      }
+
       const endpoint = user.role === 'mentee' 
-        ? 'http://localhost:3001/api/mentees/profile'
-        : 'http://localhost:3001/api/mentors/profile';
+        ? 'http://localhost:30011/api/mentees/profile'
+        : 'http://localhost:30011/api/mentors/profile';
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -65,7 +76,7 @@ const ProfileDropdown = () => {
       
       const profileData = response.data;
       setFormData({
-        fullName: profileData.fullName,
+        fullName: profileData.firstName ? `${profileData.firstName} ${profileData.lastName}` : profileData.fullName,
         email: profileData.email,
         interests: profileData.interests || [],
         bio: profileData.bio || '',
@@ -73,19 +84,23 @@ const ProfileDropdown = () => {
       });
 
       if (profileData.profilePhoto) {
-        const photoPath = user.role === 'mentee' ? 'mentees' : 'mentors';
-        setPreviewUrl(`http://localhost:3001/uploads/${photoPath}/${profileData.profilePhoto}`);
+        setPreviewUrl(`http://localhost:30011${profileData.profilePhoto}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to fetch profile data';
       toast({
         title: 'Error',
-        description: 'Failed to fetch profile data',
+        description: errorMessage,
         status: 'error',
         duration: 3000,
       });
+      
+      if (error.response?.status === 401) {
+        logout();
+      }
     }
-  }, [user, toast]);
+  }, [user, toast, logout]);
 
   useEffect(() => {
     fetchUserProfile();
@@ -161,7 +176,7 @@ const ProfileDropdown = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:3001/api/mentees/upload-photo',
+        'http://localhost:30011/api/mentees/upload-photo',
         formData,
         {
           headers: {
@@ -179,7 +194,7 @@ const ProfileDropdown = () => {
         }));
 
         // Update the preview URL
-        setPreviewUrl(`http://localhost:3001${response.data.user.profilePhoto}`);
+        setPreviewUrl(`http://localhost:30011${response.data.user.profilePhoto}`);
 
         toast({
           title: "Success",
@@ -206,8 +221,8 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:3001/api/mentees/profile/photo'
-        : 'http://localhost:3001/api/mentors/profile/photo';
+        ? 'http://localhost:30011/api/mentees/profile/photo'
+        : 'http://localhost:30011/api/mentors/profile/photo';
 
       const response = await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -257,8 +272,8 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:3001/api/mentees/profile'
-        : 'http://localhost:3001/api/mentors/profile';
+        ? 'http://localhost:30011/api/mentees/profile'
+        : 'http://localhost:30011/api/mentors/profile';
 
       await axios.put(endpoint, formData, {
         headers: { Authorization: `Bearer ${token}` }

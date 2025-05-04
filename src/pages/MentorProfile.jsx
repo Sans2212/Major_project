@@ -99,7 +99,7 @@ const MentorProfile = () => {
 
         // If not static, try to fetch by ID first
         try {
-          const response = await axios.get(`http://localhost:3001/api/mentors/profile/${mentorId}`);
+          const response = await axios.get(`http://localhost:30011/api/mentors/profile/${mentorId}`);
           const mentorData = response.data;
           
           const mentorWithDefaults = {
@@ -107,7 +107,7 @@ const MentorProfile = () => {
             name: `${mentorData.firstName} ${mentorData.lastName}`,
             about: mentorData.bio || "No description available",
             role: mentorData.jobTitle || "Mentor",
-            image: mentorData.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentorData.profilePhoto}` : null,
+            image: mentorData.profilePhoto ? `http://localhost:30011/uploads/mentors/${mentorData.profilePhoto}` : null,
             plans: mentorData.plans || [],
             sessions: mentorData.sessions || [],
             testimonials: mentorData.testimonials || [],

@@ -39,7 +39,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/auth/login", {
+      const response = await fetch("http://localhost:30011/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,7 +84,7 @@ const Login = () => {
     setOtpMessage(""); // Clear previous messages
 
     try {
-      const response = await fetch("http://localhost:3001/api/mentees/forgot-password", {
+      const response = await fetch("http://localhost:30011/api/mentees/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,7 +111,7 @@ const Login = () => {
   const resetPassword = async () => {
     setIsLoading(true); // Set loading to true while resetting password
     try {
-      const response = await fetch("http://localhost:3001/api/mentees/reset-password", {
+      const response = await fetch("http://localhost:30011/api/mentees/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword }),
