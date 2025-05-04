@@ -13,6 +13,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  ModalFooter,
   ModalCloseButton,
   FormControl,
   FormLabel,
@@ -28,11 +29,18 @@ import {
   Image,
   Divider,
   Center,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
 import { ChevronDownIcon, AddIcon, DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import React from 'react';
 
 const ProfileDropdown = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -49,6 +57,10 @@ const ProfileDropdown = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuth();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const cancelRef = React.useRef();
 
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
@@ -305,6 +317,50 @@ const ProfileDropdown = () => {
     navigate('/');
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'CONFIRM') {
+      toast({
+        title: 'Error',
+        description: 'Please type CONFIRM to delete your account',
+        status: 'error',
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const endpoint = user.role === 'mentee'
+        ? 'http://localhost:30011/api/mentees/delete-account'
+        : 'http://localhost:30011/api/mentors/delete-account';
+
+      await axios.delete(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setIsDeleteModalOpen(false);
+      setIsAlertDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Your account has been deleted successfully',
+        status: 'success',
+        duration: 3000,
+      });
+      
+      // Logout and redirect to home
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.error || 'Failed to delete account',
+        status: 'error',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <>
       <Box position="relative" minW="250px">
@@ -416,17 +472,28 @@ const ProfileDropdown = () => {
                 <Text>{formData.bio || 'No bio added'}</Text>
               </Box>
 
-              <Button
-                leftIcon={<EditIcon />}
-                colorScheme="teal"
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  setIsEditModalOpen(true);
-                }}
-                mt={4}
-              >
-                Edit Profile
-              </Button>
+              <VStack spacing={4} align="stretch">
+                <Button
+                  leftIcon={<EditIcon />}
+                  colorScheme="teal"
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setIsEditModalOpen(true);
+                  }}
+                >
+                  Edit Profile
+                </Button>
+                
+                <Button
+                  colorScheme="red"
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setIsDeleteModalOpen(true);
+                  }}
+                >
+                  Delete Account
+                </Button>
+              </VStack>
             </VStack>
           </ModalBody>
         </ModalContent>
@@ -548,6 +615,80 @@ const ProfileDropdown = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Account</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack spacing={4}>
+              <Text>To delete your account, please type &quot;CONFIRM&quot; below:</Text>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type CONFIRM"
+              />
+              <Text color="red.500" fontSize="sm">
+                This action cannot be undone. All your data will be permanently deleted.
+              </Text>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="gray" mr={3} onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={() => {
+                if (deleteConfirmText === 'CONFIRM') {
+                  setIsDeleteModalOpen(false);
+                  setIsAlertDialogOpen(true);
+                } else {
+                  toast({
+                    title: 'Error',
+                    description: 'Please type CONFIRM to delete your account',
+                    status: 'error',
+                    duration: 3000,
+                  });
+                }
+              }}
+            >
+              Delete Account
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Final Confirmation Alert Dialog */}
+      <AlertDialog
+        isOpen={isAlertDialogOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsAlertDialogOpen(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Account
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure? You can&apos;t undo this action afterwards.
+              All your data will be permanently deleted.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={() => setIsAlertDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={handleDeleteAccount} ml={3}>
+                Yes, Delete My Account
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </>
   );
 };
