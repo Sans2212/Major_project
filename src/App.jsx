@@ -10,7 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import BrowseMentors from './pages/BrowseMentors';
 import Header from "./components/comp/Header";
 import Footer from "./components/comp/Footer";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import AboutUs from "./pages/AboutUs";
 import ScrollToTop from "./components/comp/ScrollToTop";
 import GoToTopButton from "./components/comp/GoToTopButton";
@@ -21,45 +21,118 @@ import TermsOfService from "./pages/TermsOfService";
 import ContactUs from "./pages/ContactUs";
 import MentorGuidelines from "./pages/MentorGuidelines";
 import MenteeGuidelines from "./pages/MenteeGuidelines";
+import RedirectToProfile from "./pages/RedirectToProfile";
+import ProtectedRoute from "./components/comp/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
+import Settings from "./pages/Settings";
+import MenteeProfile from "./pages/MenteeProfile";
 
 function App() {
-  const location = useLocation(); // Gives the current route
+  const location = useLocation();
+  const { user } = useAuth();
 
-  // Hide header on login, signup as mentee, and mentee home page
+  // Hide header on login, signup, and application pages
   const hideHeader =
     location.pathname === "/login" ||
     location.pathname === "/signup/mentee" ||
-    location.pathname === "/home/mentee";
+    location.pathname === "/signup/mentor" ||
+    location.pathname === "/signup/mentor/form" ||
+    location.pathname === "/mentor/done";
+
+  // Redirect authenticated users from login/signup pages to their respective dashboards
+  if (user && (location.pathname === "/login" || location.pathname.startsWith("/signup"))) {
+    // Allow mentor signup for non-mentor users
+    if (location.pathname.startsWith("/signup/mentor")) {
+      if (user.role === "mentor") {
+        return <Navigate to="/my-profile" />;
+      }
+      return null; // Don't redirect, allow access
+    }
+    return <Navigate to={user.role === "mentee" ? "/" : "/my-profile"} />;
+  }
 
   return (
     <>
       <ScrollToTop />
       {!hideHeader && <Header />}
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup/:role" element={<SignupForm />} />
-        <Route path="/mentors/:mentorId" element={<MentorProfile />} />
-        <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
-        <Route path="/mentor/done" element={<MentorApplicationdone />} />
-        <Route path="/home/mentee" element={<MenteeHome />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/browse/:category" element={<BrowseMentors />} />
-        <Route path="/browse/search" element={<BrowseMentors />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/help" element={<HelpCenter />} />
-        <Route path="/feedback" element={<Feedback />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/mentor-guidelines" element={<MentorGuidelines />} />
         <Route path="/mentee/guidelines" element={<MenteeGuidelines />} />
+
+        {/* Protected routes that require authentication */}
+        <Route 
+          path="/home/mentee" 
+          element={
+            <ProtectedRoute requiredRole="mentee">
+              <MenteeHome />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/my-profile" 
+          element={
+            <ProtectedRoute requiredRole="mentor">
+              <RedirectToProfile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/mentee/profile" 
+          element={
+            <ProtectedRoute requiredRole="mentee">
+              <MenteeProfile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings/privacy" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/feedback" 
+          element={
+            <ProtectedRoute>
+              <Feedback />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Mentor application routes */}
+        <Route path="/signup/mentor/form" element={<MentorApplicationform />} />
+        <Route path="/mentor/done" element={<MentorApplicationdone />} />
+
+        {/* Browse routes with optional authentication */}
+        <Route path="/mentors/static/:mentorId" element={<MentorProfile />} />
+        <Route path="/mentors/:mentorId" element={<MentorProfile />} />
+        <Route path="/browse/:category" element={<BrowseMentors />} />
+        <Route path="/browse/search" element={<BrowseMentors />} />
       </Routes>
       <Footer />
       <GoToTopButton />
     </>
   );
-  
 }
 
 export default App;

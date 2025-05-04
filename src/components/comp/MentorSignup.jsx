@@ -1,15 +1,30 @@
-
 // import React from "react";
 
 
 import { Button, Container, Heading, Stack, Text, Box } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const MentorSignup = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleBecomeMentor = () => {
+    console.log('Become mentor button clicked');
+    console.log('Current user:', user);
+    
+    // If user is already a mentor, redirect to profile
+    if (user?.role === 'mentor') {
+      navigate('/my-profile');
+      return;
+    }
+    
+    // Otherwise, go to the application form
+    navigate('/signup/mentor/form');
+  };
 
   return (
-    <Box bgGradient="linear(to-r, blue.50, teal.100)" py={16} minHeight= "80vh">
+    <Box bgGradient="linear(to-r, blue.50, teal.100)" py={16} minHeight="80vh">
       <Container maxW="4xl" centerContent textAlign="center">
         <Heading
           fontSize={{ base: "3xl", md: "4xl", lg: "5xl" }}
@@ -28,7 +43,7 @@ const MentorSignup = () => {
           <Button
             colorScheme="blue"
             size="lg"
-            onClick={() => navigate("/signup/mentor/form")}
+            onClick={handleBecomeMentor}
           >
             Become a mentor
           </Button>

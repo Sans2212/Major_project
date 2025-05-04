@@ -1,16 +1,19 @@
-import { Provider } from "./components/ui/provider"
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from "react-router-dom";
-import theme from "./theme";
-import './index.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+import './index.css'
+import { ChakraProvider } from '@chakra-ui/react'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
     <BrowserRouter>
-      <Provider theme={theme}>
-        <App />
-      </Provider>
-    </BrowserRouter>  
-  </StrictMode>
+      <ChakraProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ChakraProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
 )

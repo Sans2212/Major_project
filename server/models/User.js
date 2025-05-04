@@ -1,26 +1,35 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import { menteeConnection } from '../config/db.js'; // Assuming this is where you're connecting to MongoDB
 
 const UserSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["mentor", "mentee"], required: true },
-  expertise: { type: String, default: "" },  // Set default for mentees
-  experience: { type: Number, default: null },  // Set default for mentees
+  interests: [{ type: String }],
+  bio: String,
+  profilePhoto: {
+    url: String,
+    publicId: String
+  },
+  createdAt: { type: Date, default: Date.now }
 });
 
-// Custom validation for mentors
-UserSchema.pre("validate", function (next) {
-  if (this.role === "Mentor") {
-    if (!this.expertise) {
-      return next(new Error("Expertise is required for mentors"));
-    }
-    if (this.experience == null) {
-      return next(new Error("Experience is required for mentors"));
-    }
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
   }
   next();
 });
 
-const UserModel = mongoose.model("users", UserSchema);
-module.exports = UserModel;
+// Method to check if the password is valid
+UserSchema.methods.isValidPassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+// Create UserModel if not already created, otherwise use existing
+const UserModel = menteeConnection.models.User || menteeConnection.model('User', UserSchema, 'User');
+
+export default UserModel;
