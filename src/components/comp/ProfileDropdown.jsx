@@ -96,7 +96,10 @@ const ProfileDropdown = () => {
       });
 
       if (profileData.profilePhoto) {
-        setPreviewUrl(`http://localhost:30011${profileData.profilePhoto}`);
+        const photoPath = user.role === 'mentee' 
+          ? `/uploads/mentees/${profileData.profilePhoto}`
+          : `/uploads/mentors/${profileData.profilePhoto}`;
+        setPreviewUrl(`http://localhost:30011${photoPath}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -674,7 +677,7 @@ const ProfileDropdown = () => {
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure? You can&apos;t undo this action afterwards.
+              Are you sure? You can&apos;t undo this action afterwards.   
               All your data will be permanently deleted.
             </AlertDialogBody>
 
