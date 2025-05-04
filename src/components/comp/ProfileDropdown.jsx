@@ -96,7 +96,7 @@ const ProfileDropdown = () => {
       });
 
       if (profileData.profilePhoto) {
-        setPreviewUrl(`http://localhost:3001${profileData.profilePhoto}`);
+        setPreviewUrl(`http://localhost:30011${profileData.profilePhoto}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -674,7 +674,7 @@ const ProfileDropdown = () => {
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure? You can&apos;t undo this action afterwards.
+              Are you sure? You can&apos;t undo this action afterwards.   
               All your data will be permanently deleted.
             </AlertDialogBody>
 
