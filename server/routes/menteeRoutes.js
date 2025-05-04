@@ -9,6 +9,8 @@ import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import dotenv from 'dotenv';
+import { env } from 'process';
 
 const router = express.Router();
 const otpStore = {}; // Temporary memory storage for OTPs
@@ -17,11 +19,14 @@ const otpStore = {}; // Temporary memory storage for OTPs
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Configure environment variables
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: env.CLOUDINARY_CLOUD_NAME,
+  api_key: env.CLOUDINARY_API_KEY,
+  api_secret: env.CLOUDINARY_API_SECRET
 });
 
 // Configure multer for file upload
@@ -73,10 +78,11 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET);
     req.userId = decoded.id;
     next();
   } catch (error) {
+    console.error('Token verification error:', error);
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
@@ -151,7 +157,7 @@ router.post('/upload-photo', verifyToken, upload.single('profilePhoto'), async (
     // Update the user's profile with the new photo filename
     const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
-      { profilePhoto: req.file.filename },
+      { profilePhoto: `/uploads/mentees/${req.file.filename}` },
       { new: true }
     );
 
@@ -159,10 +165,10 @@ router.post('/upload-photo', verifyToken, upload.single('profilePhoto'), async (
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Send back the updated user data with the correct photo URL
+    // Send back the updated user data
     const userResponse = {
       ...updatedUser.toObject(),
-      profilePhoto: updatedUser.profilePhoto ? `/uploads/mentees/${updatedUser.profilePhoto}` : null
+      profilePhoto: updatedUser.profilePhoto
     };
 
     res.json({
@@ -194,13 +200,9 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Convert user to plain object to safely access properties
-    const userObj = user.toObject();
-    console.log('Current user profile photo:', userObj.profilePhoto);
-
     // If there's a profile photo, delete the file
-    if (userObj.profilePhoto) {
-      const photoPath = path.join(__dirname, '../uploads/mentees', userObj.profilePhoto);
+    if (user.profilePhoto) {
+      const photoPath = path.join(__dirname, '..', user.profilePhoto);
       console.log('Attempting to delete file at:', photoPath);
       
       try {
@@ -214,8 +216,6 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
         console.error('Error deleting file:', fileError);
         // Continue with the update even if file deletion fails
       }
-    } else {
-      console.log('No profile photo found for user');
     }
 
     // Update user profile to remove photo reference
@@ -255,13 +255,13 @@ router.post("/forgot-password", async (req, res) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: env.EMAIL_USER,
+      pass: env.EMAIL_PASS,
     },
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: env.EMAIL_USER,
     to: email,
     subject: "Mentor Connect - OTP for Password Reset",
     text: `Hello ${user.fullName},\n\nYour OTP is: ${otp}\n\nValid for 10 minutes.`,
@@ -303,6 +303,24 @@ router.post("/reset-password", async (req, res) => {
   delete otpStore[email];
 
   res.json({ message: "Password reset successful!" });
+});
+
+// Delete mentee account
+router.delete("/delete-account", verifyToken, async (req, res) => {
+  try {
+    const MenteeModel = req.app.locals.MenteeModel;
+    const menteeId = req.userId;
+
+    const deletedMentee = await MenteeModel.findByIdAndDelete(menteeId);
+    if (!deletedMentee) {
+      return res.status(404).json({ error: "Mentee not found" });
+    }
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ error: "Failed to delete account" });
+  }
 });
 
 export default router;

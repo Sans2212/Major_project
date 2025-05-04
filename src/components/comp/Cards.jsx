@@ -3,29 +3,41 @@ import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { FaStar } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { mentors } from "../../data/mentors";
+import axios from "axios";
 
 const Cards = ({ style }) => {
   const containerRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
   const scrollPositionRef = useRef(0);
   const navigate = useNavigate();
-  
-  // Function to shuffle array
-  const shuffleArray = (array) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
+  const [recommendedMentors, setRecommendedMentors] = useState([]);
 
-  // Get random mentors for recommendation (3 mentors)
-  const [recommendedMentors] = useState(() => {
-    const shuffled = shuffleArray(mentors);
-    return shuffled.slice(0, 3);
-  });
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        // Fetch mentors from database
+        const response = await axios.get('http://localhost:3001/api/mentors/browse');
+        const dbMentors = response.data.map(mentor => ({
+          id: mentor._id,
+          name: `${mentor.firstName} ${mentor.lastName}`,
+          role: mentor.jobTitle || "Mentor",
+          rating: mentor.rating || 4.5,
+          reviews: mentor.reviews || 0,
+          expertise: mentor.skills ? mentor.skills.split(',').map(skill => skill.trim()) : [],
+          image: mentor.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentor.profilePhoto}` : null,
+          isFromDB: true
+        }));
+
+        // Get 3 random mentors for recommendations
+        const shuffled = [...dbMentors].sort(() => 0.5 - Math.random());
+        setRecommendedMentors(shuffled.slice(0, 3));
+      } catch (error) {
+        console.error('Error fetching mentors:', error);
+      }
+    };
+
+    fetchMentors();
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -58,11 +70,12 @@ const Cards = ({ style }) => {
     };
   }, [isPaused]);
 
-  const handleCardClick = (mentorId) => {
-    navigate(`/mentors/${mentorId}`, { 
-      state: { fromCards: true },
-      replace: false 
-    });
+  const handleCardClick = (mentor) => {
+    if (mentor.isFromDB) {
+      navigate(`/mentors/${mentor.id}`);
+    } else {
+      navigate(`/mentors/static/${mentor.id}`);
+    }
   };
 
   const renderMentorCard = (mentor, isDuplicate = false) => (
@@ -80,7 +93,7 @@ const Cards = ({ style }) => {
       transition="all 0.3s ease-in-out"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      onClick={() => handleCardClick(mentor.id)}
+      onClick={() => handleCardClick(mentor)}
       _hover={{ 
         transform: "scale(1.05)",
         boxShadow: "xl",

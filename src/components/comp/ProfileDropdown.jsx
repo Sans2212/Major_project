@@ -13,6 +13,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  ModalFooter,
   ModalCloseButton,
   FormControl,
   FormLabel,
@@ -28,20 +29,27 @@ import {
   Image,
   Divider,
   Center,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
 import { ChevronDownIcon, AddIcon, DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import React from 'react';
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ onProfileUpdate }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [newInterest, setNewInterest] = useState('');
+  const [newSkill, setNewSkill] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    interests: [],
+    skills: [],
     bio: '',
     profilePhoto: null,
   });
@@ -49,12 +57,28 @@ const ProfileDropdown = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuth();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const cancelRef = React.useRef();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
     
     try {
       const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({
+          title: 'Error',
+          description: 'Authentication token not found. Please log in again.',
+          status: 'error',
+          duration: 3000,
+        });
+        logout();
+        return;
+      }
+
       const endpoint = user.role === 'mentee' 
         ? 'http://localhost:3001/api/mentees/profile'
         : 'http://localhost:3001/api/mentors/profile';
@@ -65,31 +89,40 @@ const ProfileDropdown = () => {
       
       const profileData = response.data;
       setFormData({
-        fullName: profileData.fullName,
+        fullName: profileData.firstName ? `${profileData.firstName} ${profileData.lastName}` : profileData.fullName,
         email: profileData.email,
-        interests: profileData.interests || [],
+        skills: profileData.skills ? profileData.skills.split(',').map(s => s.trim()) : [],
         bio: profileData.bio || '',
         profilePhoto: profileData.profilePhoto || null,
       });
 
       if (profileData.profilePhoto) {
-        const photoPath = user.role === 'mentee' ? 'mentees' : 'mentors';
-        setPreviewUrl(`http://localhost:3001/uploads/${photoPath}/${profileData.profilePhoto}`);
+        setPreviewUrl(`http://localhost:3001${profileData.profilePhoto}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to fetch profile data';
       toast({
         title: 'Error',
-        description: 'Failed to fetch profile data',
+        description: errorMessage,
         status: 'error',
         duration: 3000,
       });
+      
+      if (error.response?.status === 401) {
+        logout();
+      }
     }
-  }, [user, toast]);
+  }, [user, toast, logout]);
 
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
+
+  useEffect(() => {
+    // fetchMentorData runs whenever refreshKey changes
+    fetchUserProfile();
+  }, [refreshKey]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -99,20 +132,20 @@ const ProfileDropdown = () => {
     }));
   };
 
-  const handleAddInterest = () => {
-    if (newInterest.trim() && !formData.interests.includes(newInterest.trim())) {
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
       setFormData(prev => ({
         ...prev,
-        interests: [...prev.interests, newInterest.trim()]
+        skills: [...prev.skills, newSkill.trim()]
       }));
-      setNewInterest('');
+      setNewSkill('');
     }
   };
 
-  const handleRemoveInterest = (interestToRemove) => {
+  const handleRemoveSkill = (skillToRemove) => {
     setFormData(prev => ({
       ...prev,
-      interests: prev.interests.filter(interest => interest !== interestToRemove)
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
     }));
   };
 
@@ -160,16 +193,16 @@ const ProfileDropdown = () => {
         return;
       }
 
-      const response = await axios.post(
-        'http://localhost:3001/api/mentees/upload-photo',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token}`
-          }
+      const endpoint = user.role === 'mentee'
+        ? 'http://localhost:3001/api/mentees/upload-photo'
+        : 'http://localhost:3001/api/mentors/upload-photo';
+
+      const response = await axios.post(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         }
-      );
+      });
 
       if (response.data.user) {
         // Update the user context with new photo
@@ -180,6 +213,11 @@ const ProfileDropdown = () => {
 
         // Update the preview URL
         setPreviewUrl(`http://localhost:3001${response.data.user.profilePhoto}`);
+
+        // Call onProfileUpdate to refresh the mentor profile
+        if (onProfileUpdate) {
+          onProfileUpdate();
+        }
 
         toast({
           title: "Success",
@@ -258,9 +296,14 @@ const ProfileDropdown = () => {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
         ? 'http://localhost:3001/api/mentees/profile'
-        : 'http://localhost:3001/api/mentors/profile';
+        : `http://localhost:3001/api/mentors/profile/${user.id || user._id}`;
 
-      await axios.put(endpoint, formData, {
+      const dataToSend = {
+        ...formData,
+        skills: formData.skills.join(', ')
+      };
+
+      await axios.put(endpoint, dataToSend, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -274,6 +317,7 @@ const ProfileDropdown = () => {
       
       // Refresh profile data
       fetchUserProfile();
+      if (onProfileUpdate) onProfileUpdate();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -288,6 +332,50 @@ const ProfileDropdown = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'CONFIRM') {
+      toast({
+        title: 'Error',
+        description: 'Please type CONFIRM to delete your account',
+        status: 'error',
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const endpoint = user.role === 'mentee'
+        ? 'http://localhost:3001/api/mentees/delete-account'
+        : 'http://localhost:3001/api/mentors/delete-account';
+
+      await axios.delete(endpoint, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setIsDeleteModalOpen(false);
+      setIsAlertDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Your account has been deleted successfully',
+        status: 'success',
+        duration: 3000,
+      });
+      
+      // Logout and redirect to home
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.error || 'Failed to delete account',
+        status: 'error',
+        duration: 3000,
+      });
+    }
   };
 
   return (
@@ -374,10 +462,10 @@ const ProfileDropdown = () => {
               </Box>
 
               <Box>
-                <Text fontWeight="bold" mb={2}>Interests</Text>
+                <Text fontWeight="bold" mb={2}>Skills / Expertise</Text>
                 <Box>
-                  {formData.interests.length > 0 ? (
-                    formData.interests.map((interest, index) => (
+                  {formData.skills.length > 0 ? (
+                    formData.skills.map((skill, index) => (
                       <Tag
                         key={index}
                         size="md"
@@ -387,11 +475,11 @@ const ProfileDropdown = () => {
                         mr={2}
                         mb={2}
                       >
-                        <TagLabel>{interest}</TagLabel>
+                        <TagLabel>{skill}</TagLabel>
                       </Tag>
                     ))
                   ) : (
-                    <Text color="gray.500">No interests added</Text>
+                    <Text color="gray.500">No skills added</Text>
                   )}
                 </Box>
               </Box>
@@ -401,17 +489,28 @@ const ProfileDropdown = () => {
                 <Text>{formData.bio || 'No bio added'}</Text>
               </Box>
 
-              <Button
-                leftIcon={<EditIcon />}
-                colorScheme="teal"
-                onClick={() => {
-                  setIsViewModalOpen(false);
-                  setIsEditModalOpen(true);
-                }}
-                mt={4}
-              >
-                Edit Profile
-              </Button>
+              <VStack spacing={4} align="stretch">
+                <Button
+                  leftIcon={<EditIcon />}
+                  colorScheme="teal"
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setIsEditModalOpen(true);
+                  }}
+                >
+                  Edit Profile
+                </Button>
+                
+                <Button
+                  colorScheme="red"
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setIsDeleteModalOpen(true);
+                  }}
+                >
+                  Delete Account
+                </Button>
+              </VStack>
             </VStack>
           </ModalBody>
         </ModalContent>
@@ -485,21 +584,21 @@ const ProfileDropdown = () => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>Interests</FormLabel>
+                <FormLabel>Skills / Expertise</FormLabel>
                 <HStack>
                   <Input
-                    value={newInterest}
-                    onChange={(e) => setNewInterest(e.target.value)}
-                    placeholder="Add new interest"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="Add new skill or expertise"
                   />
                   <IconButton
                     icon={<AddIcon />}
-                    onClick={handleAddInterest}
-                    aria-label="Add interest"
+                    onClick={handleAddSkill}
+                    aria-label="Add skill"
                   />
                 </HStack>
                 <Box mt={2}>
-                  {formData.interests.map((interest, index) => (
+                  {formData.skills.map((skill, index) => (
                     <Tag
                       key={index}
                       size="md"
@@ -509,8 +608,8 @@ const ProfileDropdown = () => {
                       mr={2}
                       mb={2}
                     >
-                      <TagLabel>{interest}</TagLabel>
-                      <TagCloseButton onClick={() => handleRemoveInterest(interest)} />
+                      <TagLabel>{skill}</TagLabel>
+                      <TagCloseButton onClick={() => handleRemoveSkill(skill)} />
                     </Tag>
                   ))}
                 </Box>
@@ -533,6 +632,80 @@ const ProfileDropdown = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Account</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack spacing={4}>
+              <Text>To delete your account, please type &quot;CONFIRM&quot; below:</Text>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type CONFIRM"
+              />
+              <Text color="red.500" fontSize="sm">
+                This action cannot be undone. All your data will be permanently deleted.
+              </Text>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="gray" mr={3} onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={() => {
+                if (deleteConfirmText === 'CONFIRM') {
+                  setIsDeleteModalOpen(false);
+                  setIsAlertDialogOpen(true);
+                } else {
+                  toast({
+                    title: 'Error',
+                    description: 'Please type CONFIRM to delete your account',
+                    status: 'error',
+                    duration: 3000,
+                  });
+                }
+              }}
+            >
+              Delete Account
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Final Confirmation Alert Dialog */}
+      <AlertDialog
+        isOpen={isAlertDialogOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsAlertDialogOpen(false)}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Account
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure? You can&apos;t undo this action afterwards.
+              All your data will be permanently deleted.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={() => setIsAlertDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={handleDeleteAccount} ml={3}>
+                Yes, Delete My Account
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </>
   );
 };

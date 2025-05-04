@@ -26,6 +26,8 @@ import {
   useToast,
   Center,
   Spinner,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -120,41 +122,66 @@ const MenteeProfile = () => {
 
     try {
       setError(null);
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(
         'http://localhost:3001/api/mentees/upload-photo',
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
 
       if (response.data.user) {
+        setProfile(prev => ({
+          ...prev,
+          profilePhoto: response.data.user.profilePhoto
+        }));
         setEditedProfile(prev => ({
           ...prev,
           profilePhoto: response.data.user.profilePhoto
         }));
         setPhotoPreview(URL.createObjectURL(file));
+        
+        toast({
+          title: "Success",
+          description: "Photo uploaded successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Error uploading photo:', error);
       setError(error.response?.data?.message || 'Error uploading photo');
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to upload photo",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const handleRemovePhoto = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      setProfile(prev => ({
+        ...prev,
+        profilePhoto: null
+      }));
       setEditedProfile(prev => ({
         ...prev,
         profilePhoto: null
       }));
+      setPhotoPreview(null);
 
       toast({
         title: "Success",
@@ -223,6 +250,11 @@ const MenteeProfile = () => {
               <Text>Loading profile...</Text>
             </VStack>
           </Center>
+        ) : error ? (
+          <Alert status="error" mb={4}>
+            <AlertIcon />
+            {error}
+          </Alert>
         ) : (
         <Box bg={bgColor} borderRadius="lg" boxShadow="md" overflow="hidden">
           {/* Profile Header */}
@@ -231,7 +263,7 @@ const MenteeProfile = () => {
               <Avatar
                 size="2xl"
                 name={profile.fullName}
-                src={profile.profilePhoto ? `http://localhost:3001${profile.profilePhoto}` : undefined}
+                src={photoPreview || (profile.profilePhoto ? `http://localhost:3001${profile.profilePhoto}` : undefined)}
               />
               <Heading size="lg">{profile.fullName}</Heading>
               <Text color={textColor} textAlign="center">{profile.bio || "No bio added yet"}</Text>
@@ -304,12 +336,19 @@ const MenteeProfile = () => {
                 <FormControl>
                   <FormLabel>Profile Photo</FormLabel>
                   <VStack spacing={2}>
+                    {photoPreview && (
+                      <Avatar
+                        size="xl"
+                        src={photoPreview}
+                        name={editedProfile.fullName}
+                      />
+                    )}
                     <Input
                       type="file"
                       accept="image/*"
                       onChange={handlePhotoChange}
                     />
-                    {editedProfile.profilePhoto && (
+                    {(editedProfile.profilePhoto || photoPreview) && (
                       <Button
                         size="sm"
                         colorScheme="red"
@@ -320,6 +359,12 @@ const MenteeProfile = () => {
                       </Button>
                     )}
                   </VStack>
+                  {error && (
+                    <Alert status="error" mt={2}>
+                      <AlertIcon />
+                      {error}
+                    </Alert>
+                  )}
                 </FormControl>
 
                 <FormControl>
