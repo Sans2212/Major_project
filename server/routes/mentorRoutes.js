@@ -151,7 +151,7 @@ router.post("/apply", upload.single("profilePhoto"), async (req, res) => {
       return res.status(400).json({ error: "A mentor with this email already exists." });
     }
 
-    const profilePhoto = req.file ? req.file.filename : null;
+    const profilePhoto = req.file ? `/uploads/mentors/${req.file.filename}` : null;
 
     console.log("Creating new mentor with email:", email);
     const mentor = new MentorModel({
@@ -464,6 +464,71 @@ router.delete("/delete-account", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("Error deleting account:", error);
     res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
+// Upload or update mentor profile photo
+router.post('/upload-photo', verifyToken, upload.single('profilePhoto'), async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const mentor = await MentorModel.findById(req.userId);
+    if (!mentor) {
+      return res.status(404).json({ message: 'Mentor not found' });
+    }
+    // Remove old photo if exists
+    if (mentor.profilePhoto) {
+      const oldPath = path.join(__dirname, '..', mentor.profilePhoto);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+    // Save new photo path
+    mentor.profilePhoto = `/uploads/mentors/${req.file.filename}`;
+    await mentor.save();
+    res.json({
+      message: 'Photo uploaded successfully',
+      user: mentor
+    });
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    res.status(500).json({ message: 'Error uploading photo', error: error.message });
+  }
+});
+
+// Remove mentor profile photo
+router.delete('/profile/photo', verifyToken, async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findById(req.userId);
+    if (!mentor) {
+      return res.status(404).json({ error: 'Mentor not found' });
+    }
+
+    // If there's a profile photo, delete the file
+    if (mentor.profilePhoto) {
+      const photoPath = path.join(__dirname, '..', mentor.profilePhoto);
+      if (fs.existsSync(photoPath)) {
+        fs.unlinkSync(photoPath);
+      }
+    }
+
+    // Remove photo reference from DB
+    mentor.profilePhoto = null;
+    await mentor.save();
+
+    res.json({
+      message: 'Profile photo removed successfully',
+      user: mentor
+    });
+  } catch (error) {
+    console.error('Error removing photo:', error);
+    res.status(500).json({
+      error: 'Server error',
+      details: error.message
+    });
   }
 });
 
