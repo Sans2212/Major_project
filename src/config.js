@@ -12,4 +12,20 @@ export const getApiUrl = () => {
 // Function to update the server port
 export const updateServerPort = (port) => {
   localStorage.setItem('serverPort', port);
+};
+
+// Function to fetch the current server port
+export const fetchServerPort = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/server-info');
+    const data = await response.json();
+    if (data.port) {
+      updateServerPort(data.port);
+      return data.port;
+    }
+    return 3001;
+  } catch (error) {
+    console.error('Failed to fetch server port:', error);
+    return 3001;
+  }
 }; 

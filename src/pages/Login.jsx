@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import logo from "../assets/main_logo.png";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl, fetchServerPort } from "../config";
 
 const Login = () => {
   const { login } = useAuth();
@@ -34,12 +35,18 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false); // Loading state for button
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Fetch server port when component mounts
+    fetchServerPort();
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:30011/api/auth/login", {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,11 +87,12 @@ const Login = () => {
   };
 
   const sendOtp = async () => {
-    setIsLoading(true); // Set loading to true while sending OTP
-    setOtpMessage(""); // Clear previous messages
+    setIsLoading(true);
+    setOtpMessage("");
 
     try {
-      const response = await fetch("http://localhost:30011/api/mentees/forgot-password", {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/mentees/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,11 +100,11 @@ const Login = () => {
         body: JSON.stringify({ email }),
       });
 
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
 
       if (response.ok) {
         setOtpMessage("OTP sent successfully to your email!");
-        setStep(2); // Move to the next step after OTP is sent
+        setStep(2);
       } else {
         const errorData = await response.json();
         setOtpMessage(`Error: ${errorData.error}`);
@@ -109,20 +117,21 @@ const Login = () => {
   };
 
   const resetPassword = async () => {
-    setIsLoading(true); // Set loading to true while resetting password
+    setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:30011/api/mentees/reset-password", {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/mentees/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword }),
       });
       const data = await response.json();
 
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
       if (response.ok) {
         alert("Password changed successfully");
         setShowForgotPassword(false);
-        setStep(1); // Reset to step 1
+        setStep(1);
         setEmail("");
         setOtp("");
         setNewPassword("");

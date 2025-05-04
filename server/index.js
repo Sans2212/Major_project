@@ -97,10 +97,11 @@ Promise.all([menteeConnection.asPromise(), mentorConnection.asPromise()])
       
       // Start the server
       app.listen(availablePort, () => {
-        console.log(`🚀 Server is running on port ${availablePort}`);
+        app.set('port', availablePort); // Store the actual port
         if (availablePort !== PORT) {
           console.log(`⚠️ Original port ${PORT} was in use, using port ${availablePort} instead`);
         }
+        console.log(`🚀 Server is running on port ${availablePort}`);
       });
     } catch (err) {
       console.error('❌ Failed to start server:', err);

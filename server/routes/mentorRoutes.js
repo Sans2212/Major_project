@@ -449,4 +449,22 @@ router.post("/:mentorId/rate", verifyMenteeToken, async (req, res) => {
   }
 });
 
+// Delete mentor account
+router.delete("/delete-account", verifyToken, async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const mentorId = req.userId;
+
+    const deletedMentor = await MentorModel.findByIdAndDelete(mentorId);
+    if (!deletedMentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
 export default router;
