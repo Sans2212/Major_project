@@ -123,7 +123,7 @@ const MenteeProfile = () => {
     try {
       setError(null);
       const response = await axios.post(
-        'http://localhost:30011/api/mentees/upload-photo',
+        'http://localhost:3001/api/mentees/upload-photo',
         formData,
         {
           headers: {
@@ -149,7 +149,7 @@ const MenteeProfile = () => {
   const handleRemovePhoto = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete("http://localhost:30011/api/mentees/profile/photo", {
+      await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -238,7 +238,7 @@ const MenteeProfile = () => {
               <Avatar
                 size="2xl"
                 name={profile.fullName}
-                src={photoPreview || (profile.profilePhoto ? `http://localhost:30011${profile.profilePhoto}` : undefined)}
+                src={photoPreview || (profile.profilePhoto ? `http://localhost:3001${profile.profilePhoto}` : undefined)}
               />
               <Heading size="lg">{profile.fullName}</Heading>
               <Text color={textColor} textAlign="center">{profile.bio || "No bio added yet"}</Text>

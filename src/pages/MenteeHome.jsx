@@ -34,14 +34,14 @@ const MenteeHome = () => {
         const token = localStorage.getItem('authToken');
         
         // Fetch user profile
-        const profileResponse = await axios.get('http://localhost:30011/api/mentees/profile', {
+        const profileResponse = await axios.get('http://localhost:3001/api/mentees/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const first = profileResponse.data.fullName.split(' ')[0];
         setFirstName(first);
 
         // Fetch mentors from database
-        const mentorsResponse = await axios.get('http://localhost:30011/api/mentors/browse');
+        const mentorsResponse = await axios.get('http://localhost:3001/api/mentors/browse');
         const dbMentors = mentorsResponse.data.map(mentor => ({
           id: mentor._id,
           name: `${mentor.firstName} ${mentor.lastName}`,
@@ -49,7 +49,7 @@ const MenteeHome = () => {
           rating: mentor.rating || 4.5,
           reviews: mentor.reviews || 0,
           expertise: mentor.skills ? mentor.skills.split(',').map(skill => skill.trim()) : [],
-          image: mentor.profilePhoto ? `http://localhost:30011/uploads/mentors/${mentor.profilePhoto}` : null,
+          image: mentor.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentor.profilePhoto}` : null,
           isFromDB: true
         }));
 

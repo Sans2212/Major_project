@@ -16,7 +16,7 @@ const Cards = ({ style }) => {
     const fetchMentors = async () => {
       try {
         // Fetch mentors from database
-        const response = await axios.get('http://localhost:30011/api/mentors/browse');
+        const response = await axios.get('http://localhost:3001/api/mentors/browse');
         const dbMentors = response.data.map(mentor => ({
           id: mentor._id,
           name: `${mentor.firstName} ${mentor.lastName}`,
@@ -24,7 +24,7 @@ const Cards = ({ style }) => {
           rating: mentor.rating || 4.5,
           reviews: mentor.reviews || 0,
           expertise: mentor.skills ? mentor.skills.split(',').map(skill => skill.trim()) : [],
-          image: mentor.profilePhoto ? `http://localhost:30011/uploads/mentors/${mentor.profilePhoto}` : null,
+          image: mentor.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentor.profilePhoto}` : null,
           isFromDB: true
         }));
 
