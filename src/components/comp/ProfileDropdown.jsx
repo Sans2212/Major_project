@@ -79,8 +79,8 @@ const ProfileDropdown = () => {
       }
 
       const endpoint = user.role === 'mentee' 
-        ? 'http://localhost:30011/api/mentees/profile'
-        : 'http://localhost:30011/api/mentors/profile';
+        ? 'http://localhost:3001/api/mentees/profile'
+        : 'http://localhost:3001/api/mentors/profile';
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -96,7 +96,7 @@ const ProfileDropdown = () => {
       });
 
       if (profileData.profilePhoto) {
-        setPreviewUrl(`http://localhost:30011${profileData.profilePhoto}`);
+        setPreviewUrl(`http://localhost:3001${profileData.profilePhoto}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -187,16 +187,16 @@ const ProfileDropdown = () => {
         return;
       }
 
-      const response = await axios.post(
-        'http://localhost:30011/api/mentees/upload-photo',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      const endpoint = user.role === 'mentee'
+      ? 'http://localhost:3001/api/mentees/upload-photo'
+      : 'http://localhost:3001/api/mentors/upload-photo';
+
+    const response = await axios.post(endpoint, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
       if (response.data.user) {
         // Update the user context with new photo
@@ -206,7 +206,7 @@ const ProfileDropdown = () => {
         }));
 
         // Update the preview URL
-        setPreviewUrl(`http://localhost:30011${response.data.user.profilePhoto}`);
+        setPreviewUrl(`http://localhost:3001${response.data.user.profilePhoto}`);
 
         toast({
           title: "Success",
@@ -233,8 +233,8 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:30011/api/mentees/profile/photo'
-        : 'http://localhost:30011/api/mentors/profile/photo';
+        ? 'http://localhost:3001/api/mentees/profile/photo'
+        : 'http://localhost:3001/api/mentors/profile/photo';
 
       const response = await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -284,8 +284,8 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:30011/api/mentees/profile'
-        : 'http://localhost:30011/api/mentors/profile';
+        ? 'http://localhost:3001/api/mentees/profile'
+        : 'http://localhost:3001/api/mentors/profile';
 
       await axios.put(endpoint, formData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -331,8 +331,8 @@ const ProfileDropdown = () => {
     try {
       const token = localStorage.getItem('authToken');
       const endpoint = user.role === 'mentee'
-        ? 'http://localhost:30011/api/mentees/delete-account'
-        : 'http://localhost:30011/api/mentors/delete-account';
+        ? 'http://localhost:3001/api/mentees/delete-account'
+        : 'http://localhost:3001/api/mentors/delete-account';
 
       await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
