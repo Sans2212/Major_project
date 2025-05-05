@@ -56,6 +56,7 @@ const MentorProfile = () => {
   const [mentor, setMentor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const cardBg = useColorModeValue("gray.50", "gray.700");
   const testimonialBg = useColorModeValue("white", "gray.800");
   const { user } = useAuth();
@@ -107,7 +108,7 @@ const MentorProfile = () => {
             name: `${mentorData.firstName} ${mentorData.lastName}`,
             about: mentorData.bio || "No description available",
             role: mentorData.jobTitle || "Mentor",
-            image: mentorData.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentorData.profilePhoto}` : null,
+            image: mentorData.profilePhoto ? `http://localhost:3001${mentorData.profilePhoto}` : null,
             plans: mentorData.plans || [],
             sessions: mentorData.sessions || [],
             testimonials: mentorData.testimonials || [],
@@ -141,7 +142,11 @@ const MentorProfile = () => {
     if (mentorId) {
       fetchMentorData();
     }
-  }, [mentorId]);
+  }, [mentorId, refreshKey]);
+
+  const handleProfileUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const handleScheduleCall = (plan = null, session = null) => {
     if (!mentor?.calendlyUrl) {
@@ -593,17 +598,19 @@ const MentorProfile = () => {
         {/* Right Column - Sidebar */}
         <GridItem colSpan={4}>
           <VStack spacing={4} align="stretch">
-            {/* Profile Image */}
-            <Box textAlign="center">
+            {/* Profile Image - move above Schedule Call */}
+            <Box textAlign="center" mb={2}>
               <Image
                 borderRadius="full"
-                boxSize="200px"
+                boxSize="180px"
                 src={mentor.image}
                 alt={mentor.name}
                 mx="auto"
+                objectFit="cover"
+                border="4px solid #e2e8f0"
+                boxShadow="lg"
               />
             </Box>
-
             {/* Contact Actions */}
             <Box p={4} borderWidth={1} borderRadius="md" boxShadow="sm">
               <VStack spacing={3}>

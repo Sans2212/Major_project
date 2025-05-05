@@ -23,7 +23,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { fetchUserSettings, saveUserSettings } from "../utils/settingsUtils";
-
+import { Spinner } from '@chakra-ui/react'
 const Settings = () => {
   const { user } = useAuth();
   const toast = useToast();
@@ -31,6 +31,7 @@ const Settings = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState({
+    
     email: "",
     fullName: "",
     phone: "",
@@ -44,18 +45,32 @@ const Settings = () => {
       showEmail: false,
       showPhone: false,
     },
-  });
+  },);
+  const [loading, setLoading] = useState(true);
 
   const initialTab = location.pathname.includes("privacy") ? 1 : 0;
-  const bgColor = useColorModeValue("white", "gray.700");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
+  const lightBgColor = "white";
+  const darkBgColor = "gray.700";
+  const lightBorderColor = "gray.200";
+  const darkBorderColor = "gray.600";
+  const bgColor = useColorModeValue(lightBgColor, darkBgColor);
+  const borderColor = useColorModeValue(lightBorderColor, darkBorderColor);
 
   useEffect(() => {
     const loadSettings = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
       try {
         const token = localStorage.getItem("authToken");
         const data = await fetchUserSettings(user, token);
-        setSettings(data);
+        setSettings(prevSettings => ({
+          ...prevSettings,
+          ...data, 
+        }));
+        
       } catch (error) {
         toast({
           title: "Error",
@@ -65,11 +80,13 @@ const Settings = () => {
           isClosable: true,
         });
       }
+      finally {
+        setLoading(false);
+      }
     };
 
     loadSettings();
   }, [user, toast]);
-
   const handleInputChange = (field, value) => {
     setSettings(prev => ({
       ...prev,
@@ -123,8 +140,16 @@ const Settings = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minH="100vh">
+        <Spinner size="xl" color="teal.500" />
+      </Box>
+    );
+  }
+  if (!user) return <Text>User not found</Text>
   return (
-    <Box minH="100vh" py={10} bg={useColorModeValue("gray.50", "gray.900")}>
+    <Box minH="100vh" py={10} bg={bgColor} >
       <Container maxW="container.md">
         <Heading mb={6}>Settings</Heading>
         <Box bg={bgColor} borderRadius="lg" boxShadow="md" overflow="hidden">
@@ -141,13 +166,13 @@ const Settings = () => {
                   <FormControl>
                     <FormLabel>Full Name</FormLabel>
                     <Input
-                      value={settings.fullName}
+                      value={settings?.fullName}
                       onChange={(e) => handleInputChange("fullName", e.target.value)}
                     />
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email</FormLabel>          
                     <Input
                       type="email"
                       value={settings.email}
@@ -157,7 +182,7 @@ const Settings = () => {
 
                   <FormControl>
                     <FormLabel>Phone Number</FormLabel>
-                    <Input
+                    <Input                   
                       value={settings.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                     />
@@ -171,7 +196,7 @@ const Settings = () => {
                       <FormControl display="flex" alignItems="center">
                         <Switch
                           id="email-notifications"
-                          isChecked={settings.notifications.email}
+                          isChecked={settings?.notifications?.email}
                           onChange={() => handleNotificationChange("email")}
                           mr={3}
                         />
@@ -183,7 +208,7 @@ const Settings = () => {
                       <FormControl display="flex" alignItems="center">
                         <Switch
                           id="message-notifications"
-                          isChecked={settings.notifications.messages}
+                          isChecked={settings?.notifications?.messages}
                           onChange={() => handleNotificationChange("messages")}
                           mr={3}
                         />
@@ -195,7 +220,7 @@ const Settings = () => {
                       <FormControl display="flex" alignItems="center">
                         <Switch
                           id="update-notifications"
-                          isChecked={settings.notifications.updates}
+                          isChecked={settings?.notifications?.updates}
                           onChange={() => handleNotificationChange("updates")}
                           mr={3}
                         />
@@ -216,7 +241,7 @@ const Settings = () => {
                   <FormControl display="flex" alignItems="center">
                     <Switch
                       id="show-profile"
-                      isChecked={settings.privacy.showProfile}
+                      isChecked={settings?.privacy?.showProfile}
                       onChange={() => handlePrivacyChange("showProfile")}
                       mr={3}
                     />
@@ -228,7 +253,7 @@ const Settings = () => {
                   <FormControl display="flex" alignItems="center">
                     <Switch
                       id="show-email"
-                      isChecked={settings.privacy.showEmail}
+                      isChecked={settings?.privacy?.showEmail}
                       onChange={() => handlePrivacyChange("showEmail")}
                       mr={3}
                     />
@@ -240,7 +265,7 @@ const Settings = () => {
                   <FormControl display="flex" alignItems="center">
                     <Switch
                       id="show-phone"
-                      isChecked={settings.privacy.showPhone}
+                      isChecked={settings?.privacy?.showPhone}
                       onChange={() => handlePrivacyChange("showPhone")}
                       mr={3}
                     />

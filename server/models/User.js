@@ -9,10 +9,7 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ["mentor", "mentee"], required: true },
   interests: [{ type: String }],
   bio: String,
-  profilePhoto: {
-    url: String,
-    publicId: String
-  },
+  profilePhoto: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 
