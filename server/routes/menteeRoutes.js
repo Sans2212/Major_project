@@ -240,6 +240,16 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
   }
 });
 
+// Route to get mentee settings
+router.get('/settings', verifyToken, async (req, res) => {
+  try {
+    res.json({ message: 'settings route for mentees' });
+  } catch (error) {
+    console.error('Error getting mentee settings:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Step 1: Send OTP to mentee's email
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;

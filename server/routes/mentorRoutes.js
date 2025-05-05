@@ -559,4 +559,14 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
   }
 });
 
+//settings route
+router.get('/settings', async (req, res) => {
+  try {
+    res.json({ message: 'settings route for mentors' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
