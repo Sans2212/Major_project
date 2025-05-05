@@ -154,7 +154,7 @@ const Footer = () => {
 
       <Box py={10}>
         <Text textAlign="center" fontSize="sm">
-          © {new Date().getFullYear()} MentorMe. All rights reserved.
+          © {new Date().getFullYear()} MentorConnect. All rights reserved.
         </Text>
       </Box>
     </Box>
