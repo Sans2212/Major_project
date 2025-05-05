@@ -47,7 +47,8 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid role provided" });
     }
 
-    const user = await model.findOne({ email });
+    // Find user and explicitly select the password field
+    const user = await model.findOne({ email }).select('+password');
     console.log("User found:", user ? "Yes" : "No");
     
     if (!user) {
@@ -58,6 +59,7 @@ router.post("/login", async (req, res) => {
     console.log("Stored password hash:", user.password);
     console.log("Attempting password validation...");
     
+    // Use bcryptjs.compare directly for debugging
     const isPasswordValid = await bcryptjs.compare(password, user.password);
     console.log("Password validation result:", isPasswordValid);
 
@@ -98,39 +100,44 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/signup", async (req, res) => {
+  console.log("=== Signup Attempt ===");
   const { fullName, email, password, confirmPassword, role } = req.body;
+  console.log("Received signup data:", { fullName, email, role });
 
   if (!fullName || !email || !password || !confirmPassword || !role) {
+    console.log("Missing required fields");
     return res.status(400).json({ error: "All fields are required" });
   }
 
   if (password !== confirmPassword) {
+    console.log("Passwords do not match");
     return res.status(400).json({ error: "Passwords do not match" });
   }
 
   try {
     const model = role === "mentor" ? Mentor : UserModel;
     if (!model) {
+      console.log("Invalid role provided:", role);
       return res.status(400).json({ error: "Invalid role provided" });
     }
 
     const existingUser = await model.findOne({ email });
     if (existingUser) {
+      console.log("User already exists with email:", email);
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Hash password before creating user
-    const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
-
+    // Create new user with plain password - let the pre-save hook handle hashing
     const newUser = new model({
       fullName,
       email,
-      password: hashedPassword,
+      password, // Pass the plain password - the pre-save hook will hash it
       role,
     });
 
+    console.log("Saving new user...");
     await newUser.save();
+    console.log("User saved successfully");
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
@@ -144,10 +151,18 @@ router.post("/signup", async (req, res) => {
       sameSite: "Strict",
     });
 
-    res.status(201).json({ message: "Signup successful", token });
+    res.status(201).json({ 
+      message: "Signup successful", 
+      token,
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role
+      }
+    });
   } catch (err) {
-    console.error("Signup error:", err.message);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Internal server error: " + err.message });
   }
 });
 

@@ -26,17 +26,17 @@ const Login = () => {
   const { login } = useAuth();
   const [role, setRole] = useState("mentee");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [step, setStep] = useState(1);
-  const [otpMessage, setOtpMessage] = useState(""); // Message for OTP status
-  const [isLoading, setIsLoading] = useState(false); // Loading state for button
+  const [otpMessage, setOtpMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch server port when component mounts
     fetchServerPort();
   }, []);
 
@@ -53,7 +53,7 @@ const Login = () => {
         },
         credentials: "include",
         body: JSON.stringify({ 
-          email: email.trim(),
+          email: loginEmail.trim(),
           password: loginPassword,
           role: role.trim()
         }),
@@ -62,13 +62,11 @@ const Login = () => {
       const data = await response.json();
       
       if (response.ok) {
-        // Use the login function from auth context
         login({
           ...data,
-          role: role.trim() // Ensure role is included in the login data
+          role: role.trim()
         });
 
-        // Redirect based on role
         if (role === "mentee") {
           navigate("/", { replace: true });
         } else {
@@ -92,12 +90,16 @@ const Login = () => {
 
     try {
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/mentees/forgot-password`, {
+      const endpoint = role === "mentee" 
+        ? `${apiUrl}/api/mentees/forgot-password`
+        : `${apiUrl}/api/mentors/forgot-password/send-otp`;
+        
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: forgotPasswordEmail }),
       });
 
       setIsLoading(false);
@@ -120,10 +122,18 @@ const Login = () => {
     setIsLoading(true);
     try {
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/api/mentees/reset-password`, {
+      const endpoint = role === "mentee"
+        ? `${apiUrl}/api/mentees/reset-password`
+        : `${apiUrl}/api/mentors/forgot-password/reset-password`;
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
+        body: JSON.stringify({ 
+          email: forgotPasswordEmail, 
+          otp, 
+          newPassword 
+        }),
       });
       const data = await response.json();
 
@@ -132,7 +142,7 @@ const Login = () => {
         alert("Password changed successfully");
         setShowForgotPassword(false);
         setStep(1);
-        setEmail("");
+        setForgotPasswordEmail("");
         setOtp("");
         setNewPassword("");
       } else {
@@ -143,6 +153,13 @@ const Login = () => {
       console.error("Error resetting password:", error);
       alert("Error resetting password. Try again.");
     }
+  };
+
+  const handleForgotPasswordClick = () => {
+    setShowForgotPassword(true);
+    setForgotPasswordEmail("");
+    setStep(1);
+    setOtpMessage("");
   };
 
   return (
@@ -201,8 +218,8 @@ const Login = () => {
                   required
                   autoComplete="email"
                   focusBorderColor="teal.500"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
                 />
               </Box>
               <Box w="full">
@@ -231,7 +248,7 @@ const Login = () => {
                 to="#"
                 color="teal"
                 _hover={{ textDecoration: "underline" }}
-                onClick={() => setShowForgotPassword(true)}
+                onClick={handleForgotPasswordClick}
               >
                 Forgot password?
               </Link>
@@ -281,8 +298,8 @@ const Login = () => {
                 <Input
                   type="email"
                   placeholder="Enter email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={forgotPasswordEmail}
+                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
                 />
                 <Button
                   colorScheme="teal"
@@ -292,7 +309,7 @@ const Login = () => {
                 >
                   Send OTP
                 </Button>
-                {otpMessage && <Text mt={4} color="red.500">{otpMessage}</Text>} {/* OTP message */}
+                {otpMessage && <Text mt={4} color="red.500">{otpMessage}</Text>}
               </VStack>
             )}
 
