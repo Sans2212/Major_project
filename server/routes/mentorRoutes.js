@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { env } from 'process';
+import axios from 'axios';
 
 // Configure environment variables
 const __filename = fileURLToPath(import.meta.url);
@@ -529,6 +530,58 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
       error: 'Server error',
       details: error.message
     });
+  }
+});
+
+// ---------------------- Update Calendly URL Route ----------------------
+router.put("/calendly-url", verifyToken, async (req, res) => {
+  try {
+    const MentorModel = req.app.locals.MentorModel;
+    const { calendlyUrl } = req.body;
+
+    if (!calendlyUrl) {
+      return res.status(400).json({ error: "Calendly URL is required" });
+    }
+
+    // Validate URL format
+    try {
+      new URL(calendlyUrl);
+    } catch {
+      return res.status(400).json({ error: "Invalid Calendly URL format" });
+    }
+
+    // Update mentor's Calendly URL
+    const mentor = await MentorModel.findByIdAndUpdate(
+      req.userId,
+      { calendlyUrl },
+      { new: true }
+    );
+
+    if (!mentor) {
+      return res.status(404).json({ error: "Mentor not found" });
+    }
+
+    res.json({ 
+      message: "Calendly URL updated successfully",
+      calendlyUrl: mentor.calendlyUrl 
+    });
+  } catch (error) {
+    console.error("Error updating Calendly URL:", error);
+    res.status(500).json({ error: "Failed to update Calendly URL" });
+  }
+});
+
+// Calendly URL existence check (proxy to avoid CORS)
+router.post("/check-calendly-url", async (req, res) => {
+  const { calendlyUrl } = req.body;
+  if (!calendlyUrl || !calendlyUrl.startsWith('https://calendly.com/')) {
+    return res.status(400).json({ exists: false, error: "Invalid Calendly URL format" });
+  }
+  try {
+    await axios.head(calendlyUrl, { timeout: 5000 });
+    return res.json({ exists: true });
+  } catch {
+    return res.json({ exists: false });
   }
 });
 

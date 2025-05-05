@@ -45,6 +45,7 @@ import { InlineWidget } from "react-calendly";
 import axios from 'axios';
 import { useAuth } from "../context/AuthContext";
 import RatingModal from "../components/comp/RatingModal";
+import CalendlySetup from "../components/comp/CalendlySetup";
 
 const MentorProfile = () => {
   const { mentorId } = useParams();
@@ -654,6 +655,13 @@ const MentorProfile = () => {
                 </HStack>
               </VStack>
             </Box>
+
+            {/* Add this where you want the Calendly integration to appear */}
+            {user?.role === 'mentee' && (
+              <Box mt={6}>
+                <CalendlySetup mentorCalendlyUrl={mentor?.calendlyUrl} isMentee={true} />
+              </Box>
+            )}
           </VStack>
         </GridItem>
       </Grid>

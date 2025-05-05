@@ -422,7 +422,7 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
               <MenuItem onClick={() => navigate('/my-profile')}>My Profile</MenuItem>
             )}
             <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
-            <MenuItem onClick={() => navigate('/settings')}>Settings</MenuItem>
+            <MenuItem onClick={() => navigate('/integrate-calendly')}>Integrate Calendly URL</MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout} color="red.500">Logout</MenuItem>
           </MenuList>

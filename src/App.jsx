@@ -24,8 +24,8 @@ import MenteeGuidelines from "./pages/MenteeGuidelines";
 import RedirectToProfile from "./pages/RedirectToProfile";
 import ProtectedRoute from "./components/comp/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
-import Settings from "./pages/Settings";
 import MenteeProfile from "./pages/MenteeProfile";
+import CalendlyIntegration from './components/CalendlyIntegration';
 
 function App() {
   const location = useLocation();
@@ -68,6 +68,7 @@ function App() {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/mentor-guidelines" element={<MentorGuidelines />} />
         <Route path="/mentee/guidelines" element={<MenteeGuidelines />} />
+        <Route path="/integrate-calendly" element={<CalendlyIntegration />} />
 
         {/* Protected routes that require authentication */}
         <Route 
@@ -96,19 +97,11 @@ function App() {
         />
         <Route 
           path="/settings" 
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } 
+          element={null} 
         />
         <Route 
           path="/settings/privacy" 
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } 
+          element={null} 
         />
         <Route 
           path="/feedback" 
