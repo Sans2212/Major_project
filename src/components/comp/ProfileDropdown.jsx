@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { updateMentorProfile, updateMenteeProfile } from '../../utils/profileUtils';
 import {
   Menu,
   MenuButton,
@@ -42,6 +43,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import React from 'react';
 
+import PropTypes from 'prop-types';
 const ProfileDropdown = ({ onProfileUpdate }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -62,7 +64,6 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const cancelRef = React.useRef();
   const [refreshKey, setRefreshKey] = useState(0);
-
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
     
@@ -114,7 +115,7 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
       }
     }
   }, [user, toast, logout]);
-
+  
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
@@ -122,7 +123,7 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
   useEffect(() => {
     // fetchMentorData runs whenever refreshKey changes
     fetchUserProfile();
-  }, [refreshKey]);
+  }, [refreshKey,fetchUserProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -290,20 +291,36 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
       });
     }
   };
-
+  
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const endpoint = user.role === 'mentee'
-        ? 'http://localhost:3001/api/mentees/profile'
-        : `http://localhost:3001/api/mentors/profile/${user.id || user._id}`;
+      const role = user.role;
 
-      const dataToSend = {
+      const profileData = {
         ...formData,
-        skills: formData.skills.join(', ')
+        skills: formData.skills.join(', '),
       };
+      let updateUserProfile;
+      
+      if (role === 'mentor') {
+          updateUserProfile = updateMentorProfile;
+      } else {
+          updateUserProfile = updateMenteeProfile;
+      }
+      
+      if (!updateUserProfile) {
+          toast({
+              title: 'Error',
+              description: 'Invalid user role',
+              status: 'error',
+              duration: 3000,
+          });
+          return;
+      }
+      
 
-      await axios.put(endpoint, dataToSend, {
+      await updateUserProfile(token, profileData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -315,7 +332,7 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
         duration: 3000,
       });
       
-      // Refresh profile data
+      
       fetchUserProfile();
       if (onProfileUpdate) onProfileUpdate();
     } catch (error) {
@@ -711,3 +728,7 @@ const ProfileDropdown = ({ onProfileUpdate }) => {
 };
 
 export default ProfileDropdown; 
+
+ProfileDropdown.propTypes = {
+  onProfileUpdate: PropTypes.func.isRequired,
+};

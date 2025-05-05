@@ -217,10 +217,10 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Get current mentor's profile
+// Get current user's profile
 router.get("/profile", verifyToken, async (req, res) => {
   try {
-    const MentorModel = req.app.locals.MentorModel;
+    const MentorModel = req.app.locals.UserModel;
     const mentor = await MentorModel.findById(req.userId).select('-password');
     
     if (!mentor) {
@@ -233,6 +233,33 @@ router.get("/profile", verifyToken, async (req, res) => {
     res.status(500).json({ error: "Error fetching mentor profile" });
   }
 });
+
+// Update user profile
+router.put('/profile', verifyToken, async (req, res) => {
+  try {
+    const UserModel = req.app.locals.UserModel;
+    const { fullName, interests, bio } = req.body;
+    const user = await UserModel.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update only allowed fields
+    if (fullName) user.fullName = fullName;
+    if (interests) user.interests = interests;
+    if (bio) user.bio = bio;
+
+    await user.save();
+    res.json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
 
 // Get mentor profile by ID
 router.get("/profile/:mentorId", async (req, res) => {
