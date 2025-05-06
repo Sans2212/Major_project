@@ -97,7 +97,6 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
   };
 
   const fetchUserProfile = useCallback(async () => {
-        if (!user) return;
 
         try {
             const token = localStorage.getItem('authToken');
@@ -132,11 +131,6 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
-
-  useEffect(() => {
-    if(user)fetchProfile(localStorage.getItem('authToken'), user.role);
-  }, [fetchUserProfile, user]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

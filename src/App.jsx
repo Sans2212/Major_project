@@ -1,6 +1,7 @@
 import './App.css';
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
+import MentorProfile from "./pages/MentorProfile";
 import SignupForm from './pages/Signup.jsx';
 import MentorApplicationform from './pages/MentorApplicationform';
 import MentorApplicationdone from './pages/MentorApplicationdone';
