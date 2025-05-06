@@ -108,19 +108,22 @@ const Header = () => {
           {/* Search Bar - Only show on desktop and for appropriate users */}
           {!isMobile && showSearch && (
             <Box flex="1" mx={8} maxW="500px">
-              <InputGroup>
+              <InputGroup maxW="400px" mx="auto">
                 <Input
-                  placeholder="Search mentors..."
+                  type="text"
+                  placeholder="Search mentors by name, skill, or area of expertise..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  aria-label="Search mentors"
+                  title="Type a mentor's name, skill, or area of expertise and press Enter. You'll see all matching mentors. Click any mentor to view their full profile and book a session."
                 />
                 <InputRightElement>
                   <IconButton
-                    icon={<SearchIcon />}
-                    variant="ghost"
-                    onClick={handleSearch}
                     aria-label="Search"
+                    icon={<SearchIcon />}
+                    onClick={handleSearch}
+                    variant="ghost"
                   />
                 </InputRightElement>
               </InputGroup>
@@ -217,19 +220,22 @@ const Header = () => {
             <VStack spacing={4} align="stretch">
               {/* Search Bar for Mobile - Only show for appropriate users */}
               {showSearch && (
-                <InputGroup>
+                <InputGroup maxW="400px" mx="auto">
                   <Input
-                    placeholder="Search mentors..."
+                    type="text"
+                    placeholder="Search mentors by name, skill, or area of expertise..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    aria-label="Search mentors"
+                    title="Type a mentor's name, skill, or area of expertise and press Enter. You'll see all matching mentors. Click any mentor to view their full profile and book a session."
                   />
                   <InputRightElement>
                     <IconButton
-                      icon={<SearchIcon />}
-                      variant="ghost"
-                      onClick={handleSearch}
                       aria-label="Search"
+                      icon={<SearchIcon />}
+                      onClick={handleSearch}
+                      variant="ghost"
                     />
                   </InputRightElement>
                 </InputGroup>

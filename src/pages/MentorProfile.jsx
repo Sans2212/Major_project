@@ -37,8 +37,7 @@ import {
   StarIcon, 
   TimeIcon, 
   CheckIcon,
-  CalendarIcon,
-  InfoIcon
+  CalendarIcon
 } from "@chakra-ui/icons";
 import { useState, useEffect } from "react";
 import { InlineWidget } from "react-calendly";
@@ -57,7 +56,6 @@ const MentorProfile = () => {
   const [mentor, setMentor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const cardBg = useColorModeValue("gray.50", "gray.700");
   const testimonialBg = useColorModeValue("white", "gray.800");
   const { user } = useAuth();
@@ -99,10 +97,18 @@ const MentorProfile = () => {
           return;
         }
 
-        // If not static, try to fetch by ID first
+        // If not static, try to fetch by ID or username
         try {
-          const response = await axios.get(`http://localhost:3001/api/mentors/profile/${mentorId}`);
-          const mentorData = response.data;
+          let mentorData;
+          if (/^[0-9a-fA-F]{24}$/.test(mentorId)) {
+            // If it's a MongoDB ObjectId, fetch by ID
+            const response = await axios.get(`http://localhost:3001/api/mentors/profile/${mentorId}`);
+            mentorData = response.data;
+          } else {
+            // Otherwise, treat as username
+            const response = await axios.get(`http://localhost:3001/api/mentors/profile/username/${mentorId}`);
+            mentorData = response.data;
+          }
           
           const mentorWithDefaults = {
             ...mentorData,
@@ -129,7 +135,7 @@ const MentorProfile = () => {
 
           setMentor(mentorWithDefaults);
         } catch (error) {
-          console.error('Error fetching mentor by ID:', error);
+          console.error('Error fetching mentor by ID or username:', error);
           throw error; // Re-throw to be caught by outer catch
         }
       } catch (error) {
@@ -143,11 +149,7 @@ const MentorProfile = () => {
     if (mentorId) {
       fetchMentorData();
     }
-  }, [mentorId, refreshKey]);
-
-  const handleProfileUpdate = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  }, [mentorId]);
 
   const handleScheduleCall = (plan = null, session = null) => {
     if (!mentor?.calendlyUrl) {
@@ -612,27 +614,27 @@ const MentorProfile = () => {
                 boxShadow="lg"
               />
             </Box>
-            {/* Contact Actions */}
-            <Box p={4} borderWidth={1} borderRadius="md" boxShadow="sm">
-              <VStack spacing={3}>
-                <Button 
-                  leftIcon={<CalendarIcon />} 
-                  colorScheme="teal" 
-                  width="full"
-                  onClick={() => handleScheduleCall()}
-                >
-                  Schedule Call
-                </Button>
-                <Button 
-                  leftIcon={<InfoIcon />} 
-                  colorScheme="gray" 
-                  width="full"
-                  onClick={() => navigate("/browse")}
-                >
-                  Browse Other Mentors
-                </Button>
-              </VStack>
-            </Box>
+            {/* Contact Actions - only for non-mentees */}
+            {user?.role !== 'mentee' && (
+              <Box p={4} borderWidth={1} borderRadius="md" boxShadow="sm">
+                <VStack spacing={3}>
+                  <Button 
+                    leftIcon={<CalendarIcon />} 
+                    colorScheme="teal" 
+                    width="full"
+                    onClick={() => handleScheduleCall()}
+                  >
+                    Schedule Call
+                  </Button>
+                </VStack>
+              </Box>
+            )}
+            {/* CalendlySetup only for mentees */}
+            {user?.role === 'mentee' && (
+              <Box mt={6}>
+                <CalendlySetup mentorCalendlyUrl={mentor?.calendlyUrl} isMentee={true} />
+              </Box>
+            )}
 
             {/* Quick Stats */}
             <Box p={4} borderWidth={1} borderRadius="md" boxShadow="sm">
@@ -655,13 +657,6 @@ const MentorProfile = () => {
                 </HStack>
               </VStack>
             </Box>
-
-            {/* Add this where you want the Calendly integration to appear */}
-            {user?.role === 'mentee' && (
-              <Box mt={6}>
-                <CalendlySetup mentorCalendlyUrl={mentor?.calendlyUrl} isMentee={true} />
-              </Box>
-            )}
           </VStack>
         </GridItem>
       </Grid>

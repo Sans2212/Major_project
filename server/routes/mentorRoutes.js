@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { env } from 'process';
 import axios from 'axios';
+import process from 'process';
 
 // Configure environment variables
 const __filename = fileURLToPath(import.meta.url);
@@ -257,6 +258,11 @@ router.put("/profile/:mentorId", async (req, res) => {
     const MentorModel = req.app.locals.MentorModel;
     const { mentorId } = req.params;
     const updateData = req.body;
+
+    if (!mentorId) {
+      // Show an error or reload user data
+      return;
+    }
 
     // Remove sensitive fields from update data
     delete updateData.password;
@@ -572,16 +578,62 @@ router.put("/calendly-url", verifyToken, async (req, res) => {
 });
 
 // Calendly URL existence check (proxy to avoid CORS)
-router.post("/check-calendly-url", async (req, res) => {
+router.post("/check-calendly-url", verifyToken, async (req, res) => {
   const { calendlyUrl } = req.body;
   if (!calendlyUrl || !calendlyUrl.startsWith('https://calendly.com/')) {
     return res.status(400).json({ exists: false, error: "Invalid Calendly URL format" });
   }
+
   try {
+    // First check if the URL exists
     await axios.head(calendlyUrl, { timeout: 5000 });
-    return res.json({ exists: true });
-  } catch {
-    return res.json({ exists: false });
+    
+    // Get the mentor's email from the database
+    const MentorModel = req.app.locals.MentorModel;
+    const mentor = await MentorModel.findById(req.userId);
+    
+    if (!mentor) {
+      return res.status(404).json({ exists: false, error: "Mentor not found" });
+    }
+
+    // Extract username from Calendly URL
+    const calendlyUsername = calendlyUrl.split('calendly.com/')[1].split('/')[0];
+    
+    // Make a request to Calendly API to verify ownership
+    const CALENDLY_API_KEY = process.env.CALENDLY_API_KEY;
+    if (!CALENDLY_API_KEY) {
+      return res.status(500).json({ exists: false, error: "Calendly API not configured" });
+    }
+
+    try {
+      const response = await axios.get(`https://api.calendly.com/users/${calendlyUsername}`, {
+        headers: {
+          'Authorization': `Bearer ${CALENDLY_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Check if the email matches
+      if (response.data.resource.email.toLowerCase() === mentor.email.toLowerCase()) {
+        return res.json({ exists: true, verified: true });
+      } else {
+        return res.json({ 
+          exists: true, 
+          verified: false, 
+          error: "This Calendly URL does not belong to your registered email" 
+        });
+      }
+    } catch (apiError) {
+      console.error('Calendly API error:', apiError);
+      return res.json({ 
+        exists: true, 
+        verified: false, 
+        error: "Could not verify Calendly URL ownership" 
+      });
+    }
+  } catch (urlError) {
+    console.error('URL validation error:', urlError);
+    return res.json({ exists: false, error: "Invalid Calendly URL" });
   }
 });
 

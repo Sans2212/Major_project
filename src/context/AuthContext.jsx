@@ -49,12 +49,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     const userWithRole = {
-      ...userData,
-      role: userData.role // Ensure role is included
+      ...userData.user, // use the user object from backend response
+      token: userData.token,
+      role: userData.role || userData.user?.role // ensure role is included
     };
     setUser(userWithRole);
+    localStorage.setItem('user', JSON.stringify(userWithRole));
     localStorage.setItem('authToken', userData.token);
-    localStorage.setItem('userRole', userData.role); // Store role separately
+    localStorage.setItem('userRole', userWithRole.role); // Store role separately
     setAuthToken(userData.token);
   };
 

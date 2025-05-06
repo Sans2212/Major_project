@@ -119,16 +119,26 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Hash password before creating user
-    const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
-
-    const newUser = new model({
-      fullName,
-      email,
-      password: hashedPassword,
-      role,
-    });
+    let newUser;
+    if (role === "mentor") {
+      // Hash password for mentors (since MentorModel does not have pre-save hook)
+      const salt = await bcryptjs.genSalt(10);
+      const hashedPassword = await bcryptjs.hash(password, salt);
+      newUser = new model({
+        fullName,
+        email,
+        password: hashedPassword,
+        role,
+      });
+    } else {
+      // For mentees, let the UserModel pre-save hook handle hashing
+      newUser = new model({
+        fullName,
+        email,
+        password,
+        role,
+      });
+    }
 
     await newUser.save();
 

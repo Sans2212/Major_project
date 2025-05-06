@@ -1,4 +1,4 @@
-import { Box, Heading, Text, Button, VStack, Link, useColorModeValue } from "@chakra-ui/react";
+import { Box, Heading, Text, Button, VStack, useColorModeValue } from "@chakra-ui/react";
 import Confetti from "react-confetti";  // Import here
 import { useWindowSize } from "react-use";
 import { useNavigate } from "react-router-dom";
@@ -12,11 +12,7 @@ const MentorApplicationdone = () => {
   const textColor = useColorModeValue("gray.600", "gray.400");
 
   const handleCalendlySetup = () => {
-    const CLIENT_ID = "YOUR_CLIENT_ID";
-    const REDIRECT_URI = "http://localhost:3000/oauth/callback";
-    const calendlyAuthUrl = `https://auth.calendly.com/oauth/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=default`;
-
-    window.location.href = calendlyAuthUrl;
+    window.open('https://calendly.com/signup', '_blank');
   };
 
   return (
@@ -55,7 +51,8 @@ const MentorApplicationdone = () => {
               Set Up Calendly Account
             </Button>
             <Text fontSize="sm" color="gray.500">
-              Already have a Calendly account? You can add your Calendly link in your profile settings later.
+              Already have a Calendly account? You can add your Calendly link in your profile settings later.<br/>
+              <b>Tip:</b> If you want to create a new Calendly account, please log out of Calendly or use an incognito/private window.
             </Text>
           </VStack>
         </Box>
