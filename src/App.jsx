@@ -2,7 +2,6 @@ import './App.css';
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import SignupForm from './pages/Signup.jsx';
-import MentorProfile from "./pages/MentorProfile";
 import MentorApplicationform from './pages/MentorApplicationform';
 import MentorApplicationdone from './pages/MentorApplicationdone';
 import MenteeHome from './pages/MenteeHome';
@@ -25,6 +24,7 @@ import RedirectToProfile from "./pages/RedirectToProfile";
 import ProtectedRoute from "./components/comp/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import MenteeProfile from "./pages/MenteeProfile";
+import MentorSignup from './components/comp/MentorSignup';
 import CalendlyIntegration from './components/CalendlyIntegration';
 
 function App() {
@@ -107,6 +107,7 @@ function App() {
           path="/feedback" 
           element={
             <ProtectedRoute>
+              
               <Feedback />
             </ProtectedRoute>
           } 
@@ -117,7 +118,7 @@ function App() {
         <Route path="/mentor/done" element={<MentorApplicationdone />} />
 
         {/* Browse routes with optional authentication */}
-        <Route path="/mentors/static/:mentorId" element={<MentorProfile />} />
+        <Route path="/mentorsignup" element={<MentorSignup />} />
         <Route path="/mentors/:mentorId" element={<MentorProfile />} />
         <Route path="/browse/:category" element={<BrowseMentors />} />
         <Route path="/browse/search" element={<BrowseMentors />} />
