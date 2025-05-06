@@ -122,41 +122,66 @@ const MenteeProfile = () => {
 
     try {
       setError(null);
+      const token = localStorage.getItem('authToken');
       const response = await axios.post(
         'http://localhost:3001/api/mentees/upload-photo',
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
 
       if (response.data.user) {
+        setProfile(prev => ({
+          ...prev,
+          profilePhoto: response.data.user.profilePhoto
+        }));
         setEditedProfile(prev => ({
           ...prev,
           profilePhoto: response.data.user.profilePhoto
         }));
         setPhotoPreview(URL.createObjectURL(file));
+        
+        toast({
+          title: "Success",
+          description: "Photo uploaded successfully",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } catch (error) {
       console.error('Error uploading photo:', error);
       setError(error.response?.data?.message || 'Error uploading photo');
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to upload photo",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const handleRemovePhoto = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.delete("http://localhost:3001/api/mentees/profile/photo", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      setProfile(prev => ({
+        ...prev,
+        profilePhoto: null
+      }));
       setEditedProfile(prev => ({
         ...prev,
         profilePhoto: null
       }));
+      setPhotoPreview(null);
 
       toast({
         title: "Success",

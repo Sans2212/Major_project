@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { updateMentorProfile, updateMenteeProfile } from '../../utils/profileUtils';
 import {
   Menu,
   MenuButton,
@@ -42,14 +43,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import React from 'react';
 
-const ProfileDropdown = () => {
+import PropTypes from 'prop-types';
+const ProfileDropdown = ({ onProfileUpdate }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [newInterest, setNewInterest] = useState('');
+  const [newSkill, setNewSkill] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    interests: [],
+    skills: [],
     bio: '',
     profilePhoto: null,
   });
@@ -61,7 +63,7 @@ const ProfileDropdown = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const cancelRef = React.useRef();
-
+  const [refreshKey, setRefreshKey] = useState(0);
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
     
@@ -90,7 +92,7 @@ const ProfileDropdown = () => {
       setFormData({
         fullName: profileData.firstName ? `${profileData.firstName} ${profileData.lastName}` : profileData.fullName,
         email: profileData.email,
-        interests: profileData.interests || [],
+        skills: profileData.skills ? profileData.skills.split(',').map(s => s.trim()) : [],
         bio: profileData.bio || '',
         profilePhoto: profileData.profilePhoto || null,
       });
@@ -113,10 +115,15 @@ const ProfileDropdown = () => {
       }
     }
   }, [user, toast, logout]);
-
+  
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
+
+  useEffect(() => {
+    // fetchMentorData runs whenever refreshKey changes
+    fetchUserProfile();
+  }, [refreshKey,fetchUserProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,20 +133,20 @@ const ProfileDropdown = () => {
     }));
   };
 
-  const handleAddInterest = () => {
-    if (newInterest.trim() && !formData.interests.includes(newInterest.trim())) {
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
       setFormData(prev => ({
         ...prev,
-        interests: [...prev.interests, newInterest.trim()]
+        skills: [...prev.skills, newSkill.trim()]
       }));
-      setNewInterest('');
+      setNewSkill('');
     }
   };
 
-  const handleRemoveInterest = (interestToRemove) => {
+  const handleRemoveSkill = (skillToRemove) => {
     setFormData(prev => ({
       ...prev,
-      interests: prev.interests.filter(interest => interest !== interestToRemove)
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
     }));
   };
 
@@ -188,15 +195,15 @@ const ProfileDropdown = () => {
       }
 
       const endpoint = user.role === 'mentee'
-      ? 'http://localhost:3001/api/mentees/upload-photo'
-      : 'http://localhost:3001/api/mentors/upload-photo';
+        ? 'http://localhost:3001/api/mentees/upload-photo'
+        : 'http://localhost:3001/api/mentors/upload-photo';
 
-    const response = await axios.post(endpoint, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
-      }
-    });
+      const response = await axios.post(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (response.data.user) {
         // Update the user context with new photo
@@ -207,6 +214,11 @@ const ProfileDropdown = () => {
 
         // Update the preview URL
         setPreviewUrl(`http://localhost:3001${response.data.user.profilePhoto}`);
+
+        // Call onProfileUpdate to refresh the mentor profile
+        if (onProfileUpdate) {
+          onProfileUpdate();
+        }
 
         toast({
           title: "Success",
@@ -279,15 +291,36 @@ const ProfileDropdown = () => {
       });
     }
   };
-
+  
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const endpoint = user.role === 'mentee'
-        ? 'http://localhost:3001/api/mentees/profile'
-        : 'http://localhost:3001/api/mentors/profile';
+      const role = user.role;
 
-      await axios.put(endpoint, formData, {
+      const profileData = {
+        ...formData,
+        skills: formData.skills.join(', '),
+      };
+      let updateUserProfile;
+      
+      if (role === 'mentor') {
+          updateUserProfile = updateMentorProfile;
+      } else {
+          updateUserProfile = updateMenteeProfile;
+      }
+      
+      if (!updateUserProfile) {
+          toast({
+              title: 'Error',
+              description: 'Invalid user role',
+              status: 'error',
+              duration: 3000,
+          });
+          return;
+      }
+      
+
+      await updateUserProfile(token, profileData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -299,8 +332,9 @@ const ProfileDropdown = () => {
         duration: 3000,
       });
       
-      // Refresh profile data
+      
       fetchUserProfile();
+      if (onProfileUpdate) onProfileUpdate();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -405,7 +439,7 @@ const ProfileDropdown = () => {
               <MenuItem onClick={() => navigate('/my-profile')}>My Profile</MenuItem>
             )}
             <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
-            <MenuItem onClick={() => navigate('/settings')}>Settings</MenuItem>
+            <MenuItem onClick={() => navigate('/integrate-calendly')}>Integrate Calendly URL</MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout} color="red.500">Logout</MenuItem>
           </MenuList>
@@ -445,10 +479,10 @@ const ProfileDropdown = () => {
               </Box>
 
               <Box>
-                <Text fontWeight="bold" mb={2}>Interests</Text>
+                <Text fontWeight="bold" mb={2}>Skills / Expertise</Text>
                 <Box>
-                  {formData.interests.length > 0 ? (
-                    formData.interests.map((interest, index) => (
+                  {formData.skills.length > 0 ? (
+                    formData.skills.map((skill, index) => (
                       <Tag
                         key={index}
                         size="md"
@@ -458,11 +492,11 @@ const ProfileDropdown = () => {
                         mr={2}
                         mb={2}
                       >
-                        <TagLabel>{interest}</TagLabel>
+                        <TagLabel>{skill}</TagLabel>
                       </Tag>
                     ))
                   ) : (
-                    <Text color="gray.500">No interests added</Text>
+                    <Text color="gray.500">No skills added</Text>
                   )}
                 </Box>
               </Box>
@@ -567,21 +601,21 @@ const ProfileDropdown = () => {
               </FormControl>
 
               <FormControl>
-                <FormLabel>Interests</FormLabel>
+                <FormLabel>Skills / Expertise</FormLabel>
                 <HStack>
                   <Input
-                    value={newInterest}
-                    onChange={(e) => setNewInterest(e.target.value)}
-                    placeholder="Add new interest"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="Add new skill or expertise"
                   />
                   <IconButton
                     icon={<AddIcon />}
-                    onClick={handleAddInterest}
-                    aria-label="Add interest"
+                    onClick={handleAddSkill}
+                    aria-label="Add skill"
                   />
                 </HStack>
                 <Box mt={2}>
-                  {formData.interests.map((interest, index) => (
+                  {formData.skills.map((skill, index) => (
                     <Tag
                       key={index}
                       size="md"
@@ -591,8 +625,8 @@ const ProfileDropdown = () => {
                       mr={2}
                       mb={2}
                     >
-                      <TagLabel>{interest}</TagLabel>
-                      <TagCloseButton onClick={() => handleRemoveInterest(interest)} />
+                      <TagLabel>{skill}</TagLabel>
+                      <TagCloseButton onClick={() => handleRemoveSkill(skill)} />
                     </Tag>
                   ))}
                 </Box>
@@ -694,3 +728,7 @@ const ProfileDropdown = () => {
 };
 
 export default ProfileDropdown; 
+
+ProfileDropdown.propTypes = {
+  onProfileUpdate: PropTypes.func.isRequired,
+};

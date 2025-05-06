@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt from "bcrypt";
+import bcryptjs from "bcryptjs";
 import nodemailer from "nodemailer";
 import UserModel from "../models/User.js";
 import jwt from 'jsonwebtoken';
@@ -157,7 +157,7 @@ router.post('/upload-photo', verifyToken, upload.single('profilePhoto'), async (
     // Update the user's profile with the new photo filename
     const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
-      { profilePhoto: req.file.filename },
+      { profilePhoto: `/uploads/mentees/${req.file.filename}` },
       { new: true }
     );
 
@@ -165,10 +165,10 @@ router.post('/upload-photo', verifyToken, upload.single('profilePhoto'), async (
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Send back the updated user data with the correct photo URL
+    // Send back the updated user data
     const userResponse = {
       ...updatedUser.toObject(),
-      profilePhoto: updatedUser.profilePhoto ? `/uploads/mentees/${updatedUser.profilePhoto}` : null
+      profilePhoto: updatedUser.profilePhoto
     };
 
     res.json({
@@ -200,13 +200,9 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Convert user to plain object to safely access properties
-    const userObj = user.toObject();
-    console.log('Current user profile photo:', userObj.profilePhoto);
-
     // If there's a profile photo, delete the file
-    if (userObj.profilePhoto) {
-      const photoPath = path.join(__dirname, '../uploads/mentees', userObj.profilePhoto);
+    if (user.profilePhoto) {
+      const photoPath = path.join(__dirname, '..', user.profilePhoto);
       console.log('Attempting to delete file at:', photoPath);
       
       try {
@@ -220,8 +216,6 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
         console.error('Error deleting file:', fileError);
         // Continue with the update even if file deletion fails
       }
-    } else {
-      console.log('No profile photo found for user');
     }
 
     // Update user profile to remove photo reference
@@ -243,6 +237,16 @@ router.delete('/profile/photo', verifyToken, async (req, res) => {
       error: 'Server error',
       details: error.message 
     });
+  }
+});
+
+// Route to get mentee settings
+router.get('/settings', verifyToken, async (req, res) => {
+  try {
+    res.json({ message: 'settings route for mentees' });
+  } catch (error) {
+    console.error('Error getting mentee settings:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -301,14 +305,19 @@ router.post("/reset-password", async (req, res) => {
     return res.status(400).json({ error: "Invalid OTP" });
   }
 
-  // Hash the new password
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await UserModel.updateOne({ email, role: "mentee" }, { password: hashedPassword });
+  try {
+    // Update the password directly - the pre-save hook will handle hashing
+    user.password = newPassword;
+    await user.save();
 
-  // Cleanup OTP after successful password reset
-  delete otpStore[email];
+    // Cleanup OTP after successful password reset
+    delete otpStore[email];
 
-  res.json({ message: "Password reset successful!" });
+    res.json({ message: "Password reset successful!" });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
 });
 
 // Delete mentee account

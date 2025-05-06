@@ -45,6 +45,7 @@ import { InlineWidget } from "react-calendly";
 import axios from 'axios';
 import { useAuth } from "../context/AuthContext";
 import RatingModal from "../components/comp/RatingModal";
+import CalendlySetup from "../components/comp/CalendlySetup";
 
 const MentorProfile = () => {
   const { mentorId } = useParams();
@@ -56,6 +57,7 @@ const MentorProfile = () => {
   const [mentor, setMentor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const cardBg = useColorModeValue("gray.50", "gray.700");
   const testimonialBg = useColorModeValue("white", "gray.800");
   const { user } = useAuth();
@@ -105,23 +107,23 @@ const MentorProfile = () => {
           const mentorWithDefaults = {
             ...mentorData,
             name: `${mentorData.firstName} ${mentorData.lastName}`,
-            about: mentorData.bio || "No description available",
-            role: mentorData.jobTitle || "Mentor",
-            image: mentorData.profilePhoto ? `http://localhost:3001/uploads/mentors/${mentorData.profilePhoto}` : null,
-            plans: mentorData.plans || [],
-            sessions: mentorData.sessions || [],
-            testimonials: mentorData.testimonials || [],
-            articles: mentorData.articles || [],
-            experience: mentorData.experience || [],
-            education: mentorData.education || [],
-            certifications: mentorData.certifications || [],
-            expertiseDetails: mentorData.expertiseDetails || [],
-            languages: mentorData.languages || [],
+            about: mentorData.bio ?? "No description available",
+            role: mentorData.jobTitle ?? "Mentor",
+            image: mentorData.profilePhoto ? `http://localhost:3001${mentorData.profilePhoto}` : null,
+            plans: mentorData.plans ?? [],
+            sessions: mentorData.sessions ?? [],
+            testimonials: mentorData.testimonials ?? [],
+            articles: mentorData.articles ?? [],
+            experience: mentorData.experience ?? [],
+            education: mentorData.education ?? [],
+            certifications: mentorData.certifications ?? [],
+            expertiseDetails: mentorData.expertiseDetails ?? [],
+            languages: mentorData.languages ?? [],
             expertise: mentorData.skills ? mentorData.skills.split(',').map(skill => skill.trim()) : [],
-            calendlyUrl: mentorData.calendlyUrl || null,
-            rating: mentorData.rating || 0,
-            reviews: mentorData.reviews || 0,
-            responseTime: mentorData.responseTime || "Not specified",
+            calendlyUrl: mentorData.calendlyUrl ?? null,
+            rating: mentorData.rating ?? 0,
+            reviews: mentorData.reviews ?? 0,
+            responseTime: mentorData.responseTime ?? "Not specified",
             lastActive: mentorData.lastActive ? new Date(mentorData.lastActive).toLocaleDateString() : "Recently"
           };
 
@@ -141,7 +143,11 @@ const MentorProfile = () => {
     if (mentorId) {
       fetchMentorData();
     }
-  }, [mentorId]);
+  }, [mentorId, refreshKey]);
+
+  const handleProfileUpdate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const handleScheduleCall = (plan = null, session = null) => {
     if (!mentor?.calendlyUrl) {
@@ -593,17 +599,19 @@ const MentorProfile = () => {
         {/* Right Column - Sidebar */}
         <GridItem colSpan={4}>
           <VStack spacing={4} align="stretch">
-            {/* Profile Image */}
-            <Box textAlign="center">
+            {/* Profile Image - move above Schedule Call */}
+            <Box textAlign="center" mb={2}>
               <Image
                 borderRadius="full"
-                boxSize="200px"
+                boxSize="180px"
                 src={mentor.image}
                 alt={mentor.name}
                 mx="auto"
+                objectFit="cover"
+                border="4px solid #e2e8f0"
+                boxShadow="lg"
               />
             </Box>
-
             {/* Contact Actions */}
             <Box p={4} borderWidth={1} borderRadius="md" boxShadow="sm">
               <VStack spacing={3}>
@@ -647,6 +655,13 @@ const MentorProfile = () => {
                 </HStack>
               </VStack>
             </Box>
+
+            {/* Add this where you want the Calendly integration to appear */}
+            {user?.role === 'mentee' && (
+              <Box mt={6}>
+                <CalendlySetup mentorCalendlyUrl={mentor?.calendlyUrl} isMentee={true} />
+              </Box>
+            )}
           </VStack>
         </GridItem>
       </Grid>
