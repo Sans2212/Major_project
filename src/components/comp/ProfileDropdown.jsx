@@ -128,9 +128,10 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
     }
   }, [user, toast, logout]);
   
-  useEffect(() => {
-    fetchUserProfile();
-  }, [fetchUserProfile]);
+    useEffect(() => {
+        if (!user) return;
+        fetchUserProfile();
+    }, [user,fetchUserProfile]);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
