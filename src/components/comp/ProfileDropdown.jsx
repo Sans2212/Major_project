@@ -65,7 +65,7 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
   const cancelRef = React.useRef();
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchProfile = async (token, role) => {
+  const fetchProfile = async (token, role, ) => {
     if (!token) {
       console.error('No token provided');
       return null;
@@ -132,9 +132,10 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
+
   useEffect(() => {
     if(user)fetchProfile(localStorage.getItem('authToken'), user.role);
-  }, [refreshKey,fetchUserProfile]);
+  }, [fetchUserProfile, user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

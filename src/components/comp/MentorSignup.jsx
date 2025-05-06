@@ -6,7 +6,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-import { fetchProfile } from "../../components/comp/ProfileDropdown";
 
 const MentorSignup = () => {
     const navigate = useNavigate();
