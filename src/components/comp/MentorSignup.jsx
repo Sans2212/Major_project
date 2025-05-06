@@ -2,7 +2,7 @@
 
 
 import { Button, Container, Heading, Stack, Text, Box } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const MentorSignup = () => {
@@ -47,14 +47,15 @@ const MentorSignup = () => {
           >
             Become a mentor
           </Button>
+          <Link to="/help">
           <Button
             variant="outline"
             colorScheme="teal"
-            size="lg"
-            onClick={() => navigate("/faq")}
+            size="lg"           
           >
             Frequently asked questions
           </Button>
+          </Link>
         </Stack>
       </Container>
     </Box>
