@@ -438,12 +438,11 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
           </MenuButton>
           <MenuList borderRadius="0">
             {user?.role === 'mentee' && (
-              <MenuItem onClick={() => navigate('/home/mentee')}>Dashboard</MenuItem>
-            )}
-            {user?.role === 'mentor' && (
+              <MenuItem onClick={() => navigate('/')}>Dashboard</MenuItem>            )}
+             {user?.role === 'mentor' && (
               <MenuItem onClick={() => navigate('/my-profile')}>My Profile</MenuItem>
             )}
-            <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
+              <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
             <MenuItem onClick={() => navigate('/integrate-calendly')}>Integrate Calendly URL</MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout} color="red.500">Logout</MenuItem>
