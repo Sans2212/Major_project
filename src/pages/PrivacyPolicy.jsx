@@ -41,7 +41,7 @@ const PrivacyPolicy = () => {
               Introduction
             </Heading>
             <Text color={textColor}>
-              At MentorMe, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
+              At MentorConnect, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.
             </Text>
           </Box>
 
@@ -195,7 +195,7 @@ const PrivacyPolicy = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </Text>
             <Text color={textColor} mt={2}>
-              Email: privacy@mentorme.com
+              Email: privacy@mentorconnect.com
             </Text>
           </Box>
         </VStack>

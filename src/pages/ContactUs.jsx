@@ -52,7 +52,7 @@ const ContactUs = () => {
                   <Icon as={FaEnvelope} color="teal.500" boxSize={6} />
                   <VStack align="start" spacing={0}>
                     <Text fontWeight="bold" color={headingColor}>Email</Text>
-                    <Text color={textColor}>support@mentorme.com</Text>
+                    <Text color={textColor}>support@mentorconnect.com</Text>
                   </VStack>
                 </HStack>
 

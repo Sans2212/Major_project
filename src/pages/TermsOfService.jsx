@@ -41,7 +41,7 @@ const TermsOfService = () => {
               Introduction
             </Heading>
             <Text color={textColor}>
-              Welcome to MentorMe. By accessing or using our platform, you agree to be bound by these Terms of Service. Please read these terms carefully before using our services.
+              Welcome to Mentor Connect. By accessing or using our platform, you agree to be bound by these Terms of Service. Please read these terms carefully before using our services.
             </Text>
           </Box>
 
@@ -235,7 +235,7 @@ const TermsOfService = () => {
               If you have any questions about these Terms of Service, please contact us at:
             </Text>
             <Text color={textColor} mt={2}>
-              Email: legal@mentorme.com
+              Email: legal@mentorconnect.com
             </Text>
           </Box>
         </VStack>
