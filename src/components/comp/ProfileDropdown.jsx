@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { updateMentorProfile, updateMenteeProfile } from '../../utils/profileUtils';
 import {
   Menu,
-  MenuButton, 
+  MenuButton,
   MenuList,
   MenuItem,
   Avatar,
@@ -44,8 +44,8 @@ import { useAuth } from '../../context/AuthContext';
 import React from 'react';
 
 import PropTypes from 'prop-types';
-const ProfileDropdown = ({ onProfileUpdate, user }) => {
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+const ProfileDropdown = ({ onProfileUpdate }) => {
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [formData, setFormData] = useState({
@@ -58,28 +58,48 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
   const [previewUrl, setPreviewUrl] = useState('');
   const toast = useToast();
   const navigate = useNavigate();
-  const { logout, setUser } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const cancelRef = React.useRef();
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const fetchProfile = async (token, role, ) => {
-    if (!token) {
-      console.error('No token provided');
-      return null;
-    }
-
-    const endpoint = role === 'mentee'
-      ? 'http://localhost:3001/api/mentees/profile'
-      : 'http://localhost:3001/api/mentors/profile';
-
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) return;
+    
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        toast({
+          title: 'Error',
+          description: 'Authentication token not found. Please log in again.',
+          status: 'error',
+          duration: 3000,
+        });
+        logout();
+        return;
+      }
+
+      const endpoint = user.role === 'mentee' 
+        ? 'http://localhost:3001/api/mentees/profile'
+        : 'http://localhost:3001/api/mentors/profile';
+
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return response.data;
+      
+      const profileData = response.data;
+      setFormData({
+        fullName: profileData.firstName ? `${profileData.firstName} ${profileData.lastName}` : profileData.fullName,
+        email: profileData.email,
+        skills: profileData.skills ? profileData.skills.split(',').map(s => s.trim()) : [],
+        bio: profileData.bio || '',
+        profilePhoto: profileData.profilePhoto || null,
+      });
+
+      if (profileData.profilePhoto) {
+        setPreviewUrl(`http://localhost:3001${profileData.profilePhoto}`);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       const errorMessage = error.response?.data?.error || 'Failed to fetch profile data';
@@ -89,49 +109,22 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
         status: 'error',
         duration: 3000,
       });
+      
       if (error.response?.status === 401) {
         logout();
       }
-      return null;
-    }
-  };
-
-  const fetchUserProfile = useCallback(async () => {
-
-        try {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                toast({
-                    title: 'Error',
-                    description: 'Authentication token not found. Please log in again.',
-                    status: 'error',
-                    duration: 3000,
-                });
-                logout();
-                return;
-            }
-
-            const profileData = await fetchProfile(token, user.role);
-            if (profileData) {
-                setFormData({
-                    fullName: profileData.firstName ? `${profileData.firstName} ${profileData.lastName}` : profileData.fullName,
-                    email: profileData.email,
-                    skills: profileData.skills ? profileData.skills.split(',').map(s => s.trim()) : [],
-                    bio: profileData.bio || '',
-                    profilePhoto: profileData.profilePhoto || null,
-                });
-                if (profileData.profilePhoto) {
-                    setPreviewUrl(`http://localhost:3001${profileData.profilePhoto}`);
-                }
-            }
-    } catch (error) {
     }
   }, [user, toast, logout]);
   
-    useEffect(() => {
-        if (!user) return;
-        fetchUserProfile();
-    }, [user,fetchUserProfile]);
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
+
+  useEffect(() => {
+    // fetchMentorData runs whenever refreshKey changes
+    fetchUserProfile();
+  }, [refreshKey,fetchUserProfile]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -339,7 +332,8 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
         duration: 3000,
       });
       
-    fetchUserProfile();
+      
+      fetchUserProfile();
       if (onProfileUpdate) onProfileUpdate();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -439,11 +433,12 @@ const ProfileDropdown = ({ onProfileUpdate, user }) => {
           </MenuButton>
           <MenuList borderRadius="0">
             {user?.role === 'mentee' && (
-              <MenuItem onClick={() => navigate('/')}>Dashboard</MenuItem>            )}
-             {user?.role === 'mentor' && (
+              <MenuItem onClick={() => navigate('/home/mentee')}>Dashboard</MenuItem>
+            )}
+            {user?.role === 'mentor' && (
               <MenuItem onClick={() => navigate('/my-profile')}>My Profile</MenuItem>
             )}
-              <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
+            <MenuItem onClick={() => setIsViewModalOpen(true)}>View Profile</MenuItem>
             <MenuItem onClick={() => navigate('/integrate-calendly')}>Integrate Calendly URL</MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout} color="red.500">Logout</MenuItem>
@@ -736,5 +731,4 @@ export default ProfileDropdown;
 
 ProfileDropdown.propTypes = {
   onProfileUpdate: PropTypes.func.isRequired,
-    user: PropTypes.object.isRequired,
 };
